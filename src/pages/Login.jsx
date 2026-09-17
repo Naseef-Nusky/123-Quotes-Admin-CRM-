@@ -28,12 +28,9 @@ export default function Login() {
   return (
     <div className="grid min-h-screen place-items-center bg-navy px-4">
       <form onSubmit={onSubmit} className="w-full max-w-md rounded-xl bg-white p-8 shadow-xl">
-        <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="123 Quotes" className="h-12 w-12 object-contain" />
-          <div>
-            <p className="font-display text-2xl font-bold text-navy">123 Quotes</p>
-            <h1 className="text-sm font-semibold text-slate-500">Admin CRM Login</h1>
-          </div>
+        <div>
+          <p className="font-display text-2xl font-bold text-navy">123 Quotes</p>
+          <h1 className="text-sm font-semibold text-slate-500">Admin CRM Login</h1>
         </div>
 
         <div className="mt-6 space-y-4">
