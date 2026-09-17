@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
+import { Button, Input } from '../components/ui.jsx'
 
 export default function Login() {
   const { user, login } = useAuth()
@@ -9,7 +10,7 @@ export default function Login() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
-  if (user) return <Navigate to="/" replace />
+  if (user?.role === 'ADMIN') return <Navigate to="/" replace />
 
   async function onSubmit(e) {
     e.preventDefault()
@@ -26,44 +27,38 @@ export default function Login() {
 
   return (
     <div className="grid min-h-screen place-items-center bg-navy px-4">
-      <form
-        onSubmit={onSubmit}
-        className="w-full max-w-md rounded-xl bg-white p-8 shadow-xl"
-      >
-        <p className="font-display text-2xl font-bold text-navy">123 Quotes</p>
-        <h1 className="mt-1 text-lg font-semibold text-navy/80">Admin CRM Login</h1>
+      <form onSubmit={onSubmit} className="w-full max-w-md rounded-xl bg-white p-8 shadow-xl">
+        <div className="flex items-center gap-3">
+          <img src="/logo.png" alt="123 Quotes" className="h-12 w-12 object-contain" />
+          <div>
+            <p className="font-display text-2xl font-bold text-navy">123 Quotes</p>
+            <h1 className="text-sm font-semibold text-slate-500">Admin CRM Login</h1>
+          </div>
+        </div>
 
-        <label className="mt-6 block text-sm font-semibold">
-          Email
-          <input
-            className="mt-1 w-full rounded-md border border-line/30 px-3 py-2.5 outline-none focus:ring-2 focus:ring-accent/40"
+        <div className="mt-6 space-y-4">
+          <Input
+            label="Email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-        </label>
-        <label className="mt-4 block text-sm font-semibold">
-          Password
-          <input
-            className="mt-1 w-full rounded-md border border-line/30 px-3 py-2.5 outline-none focus:ring-2 focus:ring-accent/40"
+          <Input
+            label="Password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-        </label>
+        </div>
 
         {error && <p className="mt-3 text-sm text-warn">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="mt-6 w-full rounded-md bg-accent py-2.5 text-sm font-bold text-white hover:bg-accent-dark disabled:opacity-60"
-        >
+        <Button type="submit" disabled={loading} className="mt-6 w-full">
           {loading ? 'Signing in…' : 'Sign in'}
-        </button>
-        <p className="mt-4 text-center text-xs text-muted">
+        </Button>
+        <p className="mt-4 text-center text-xs text-slate-400">
           Default: admin@123quotes.com / admin123
         </p>
       </form>

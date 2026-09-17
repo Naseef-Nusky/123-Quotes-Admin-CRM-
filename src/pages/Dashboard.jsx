@@ -1,69 +1,142 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client.js'
+import {
+  Card,
+  ErrorBanner,
+  Loading,
+  PageHeader,
+  StatusBadge,
+  formatDate,
+  formatMoney,
+} from '../components/ui.jsx'
 
 export default function Dashboard() {
-  const [stats, setStats] = useState(null)
+  const [data, setData] = useState(null)
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     api
       .dashboard()
-      .then(setStats)
+      .then(setData)
       .catch((err) => setError(err.message))
+      .finally(() => setLoading(false))
   }, [])
 
+  const stats = data?.stats
   const cards = [
-    { label: 'Total Quotes', value: stats?.totalQuotes ?? '—', to: '/quotes' },
-    { label: 'Published', value: stats?.publishedQuotes ?? '—', to: '/quotes' },
-    { label: 'Leads', value: stats?.totalLeads ?? '—', to: '/leads' },
-    { label: 'New Leads', value: stats?.newLeads ?? '—', to: '/leads' },
+    { label: 'Customers', value: stats?.customers, to: '/users' },
+    { label: 'Professionals', value: stats?.professionals, to: '/users' },
+    { label: 'Requests', value: stats?.requests, to: '/requests' },
+    { label: 'Leads', value: stats?.leads, to: '/leads' },
+    { label: 'Unlocks', value: stats?.unlocks, to: '/leads' },
+    { label: 'Revenue', value: stats ? formatMoney(stats.revenueCents) : null, to: '/payments' },
   ]
 
   return (
     <div>
-      <h1 className="font-display text-3xl font-bold">Dashboard</h1>
-      <p className="mt-1 text-muted">Overview of your quotes library and CRM leads.</p>
-
-      {error && <p className="mt-4 text-sm text-warn">{error}</p>}
-
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {cards.map((card) => (
-          <Link
-            key={card.label}
-            to={card.to}
-            className="rounded-xl border border-line/20 bg-white p-5 shadow-sm transition hover:border-accent/40"
-          >
-            <p className="text-sm font-medium text-muted">{card.label}</p>
-            <p className="mt-2 text-3xl font-bold text-navy">{card.value}</p>
-          </Link>
-        ))}
-      </div>
-
-      {stats?.recentLeads?.length > 0 && (
-        <div className="mt-10">
-          <h2 className="text-lg font-semibold">Recent leads</h2>
-          <div className="mt-3 overflow-hidden rounded-xl border border-line/20 bg-white">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-canvas text-muted">
-                <tr>
-                  <th className="px-4 py-3 font-medium">Name</th>
-                  <th className="px-4 py-3 font-medium">Email</th>
-                  <th className="px-4 py-3 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stats.recentLeads.map((lead) => (
-                  <tr key={lead._id} className="border-t border-line/15">
-                    <td className="px-4 py-3">{lead.name}</td>
-                    <td className="px-4 py-3">{lead.email}</td>
-                    <td className="px-4 py-3 capitalize">{lead.status}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      <PageHeader title="Dashboard" subtitle="Platform overview and recent activity." />
+      <ErrorBanner message={error} />
+      {loading ? (
+        <Loading />
+      ) : (
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {cards.map((card) => (
+              <Link
+                key={card.label}
+                to={card.to}
+                className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:border-blue/40"
+              >
+                <p className="text-sm font-medium text-slate-500">{card.label}</p>
+                <p className="mt-2 text-3xl font-bold text-navy">{card.value ?? '—'}</p>
+              </Link>
+            ))}
           </div>
-        </div>
+
+          <div className="mt-8 grid gap-6 lg:grid-cols-2">
+            <Card className="overflow-hidden">
+              <div className="border-b border-slate-100 px-4 py-3">
+                <h2 className="font-semibold">Recent requests</h2>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-canvas text-slate-500">
+                    <tr>
+                      <th className="px-4 py-2 font-medium">Customer</th>
+                      <th className="px-4 py-2 font-medium">Service</th>
+                      <th className="px-4 py-2 font-medium">Status</th>
+                      <th className="px-4 py-2 font-medium">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(data?.recentRequests || []).map((r) => (
+                      <tr key={r.id} className="border-t border-slate-100">
+                        <td className="px-4 py-2">
+                          {r.customer?.firstName} {r.customer?.lastName}
+                        </td>
+                        <td className="px-4 py-2">{r.service?.name || '—'}</td>
+                        <td className="px-4 py-2">
+                          <StatusBadge status={r.status} />
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap text-slate-500">
+                          {formatDate(r.createdAt)}
+                        </td>
+                      </tr>
+                    ))}
+                    {!data?.recentRequests?.length && (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-6 text-center text-slate-500">
+                          No recent requests
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+
+            <Card className="overflow-hidden">
+              <div className="border-b border-slate-100 px-4 py-3">
+                <h2 className="font-semibold">Recent leads</h2>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="bg-canvas text-slate-500">
+                    <tr>
+                      <th className="px-4 py-2 font-medium">Service</th>
+                      <th className="px-4 py-2 font-medium">Postcode</th>
+                      <th className="px-4 py-2 font-medium">Status</th>
+                      <th className="px-4 py-2 font-medium">Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(data?.recentLeads || []).map((lead) => (
+                      <tr key={lead.id} className="border-t border-slate-100">
+                        <td className="px-4 py-2">{lead.service?.name || '—'}</td>
+                        <td className="px-4 py-2">{lead.postcode}</td>
+                        <td className="px-4 py-2">
+                          <StatusBadge status={lead.status} />
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap text-slate-500">
+                          {formatDate(lead.createdAt)}
+                        </td>
+                      </tr>
+                    ))}
+                    {!data?.recentLeads?.length && (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-6 text-center text-slate-500">
+                          No recent leads
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </div>
+        </>
       )}
     </div>
   )

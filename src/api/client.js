@@ -25,12 +25,70 @@ async function request(path, options = {}) {
 export const api = {
   login: (body) => request('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
   me: () => request('/auth/me'),
-  dashboard: () => request('/dashboard'),
-  getQuotes: () => request('/quotes'),
-  createQuote: (body) => request('/quotes', { method: 'POST', body: JSON.stringify(body) }),
-  updateQuote: (id, body) => request(`/quotes/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-  deleteQuote: (id) => request(`/quotes/${id}`, { method: 'DELETE' }),
-  getLeads: () => request('/leads'),
-  updateLead: (id, body) => request(`/leads/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
-  deleteLead: (id) => request(`/leads/${id}`, { method: 'DELETE' }),
+
+  dashboard: () => request('/admin/dashboard'),
+
+  getUsers: (params = {}) => {
+    const q = new URLSearchParams(params).toString()
+    return request(`/admin/users${q ? `?${q}` : ''}`)
+  },
+  updateUserStatus: (id, status) =>
+    request(`/admin/users/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+
+  getCategories: () => request('/services/categories'),
+  getServicesAll: () => request('/services/manage/all'),
+  upsertCategory: (body) =>
+    request('/services/manage/categories', { method: 'POST', body: JSON.stringify(body) }),
+  updateCategory: (id, body) =>
+    request(`/services/manage/categories/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  upsertService: (body) =>
+    request('/services/manage', { method: 'POST', body: JSON.stringify(body) }),
+  updateService: (id, body) =>
+    request(`/services/manage/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+
+  getQuestions: (serviceId) =>
+    request(`/questions${serviceId ? `?serviceId=${serviceId}` : ''}`),
+  createQuestion: (body) =>
+    request('/questions', { method: 'POST', body: JSON.stringify(body) }),
+  updateQuestion: (id, body) =>
+    request(`/questions/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteQuestion: (id) => request(`/questions/${id}`, { method: 'DELETE' }),
+  createBranch: (body) =>
+    request('/questions/branches', { method: 'POST', body: JSON.stringify(body) }),
+
+  getRequests: (status) =>
+    request(`/requests/admin/all${status ? `?status=${status}` : ''}`),
+  updateRequestStatus: (id, status) =>
+    request(`/requests/admin/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+
+  getLeads: () => request('/leads/admin/all'),
+  rematchLead: (id) => request(`/leads/admin/${id}/rematch`, { method: 'POST' }),
+
+  getPackages: () => request('/admin/packages'),
+  createPackage: (body) =>
+    request('/admin/packages', { method: 'POST', body: JSON.stringify(body) }),
+  updatePackage: (id, body) =>
+    request(`/admin/packages/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+
+  getPayments: () => request('/admin/payments'),
+
+  getTemplates: () => request('/admin/templates'),
+  upsertTemplate: (body) =>
+    request('/admin/templates', { method: 'POST', body: JSON.stringify(body) }),
+
+  getSettings: () => request('/admin/settings'),
+  upsertSetting: (body) =>
+    request('/admin/settings', { method: 'POST', body: JSON.stringify(body) }),
+
+  getPages: () => request('/admin/pages'),
+  upsertPage: (body) =>
+    request('/admin/pages', { method: 'POST', body: JSON.stringify(body) }),
+
+  getActivity: () => request('/admin/activity'),
+
+  adjustTokens: (body) =>
+    request('/professionals/admin/tokens/adjust', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
 }

@@ -3,6 +3,10 @@ import { api } from '../api/client.js'
 
 const AuthContext = createContext(null)
 
+function isAdmin(user) {
+  return user?.role === 'ADMIN'
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -15,7 +19,14 @@ export function AuthProvider({ children }) {
     }
     api
       .me()
-      .then((data) => setUser(data.user))
+      .then((data) => {
+        if (!isAdmin(data.user)) {
+          localStorage.removeItem('token')
+          setUser(null)
+          return
+        }
+        setUser(data.user)
+      })
       .catch(() => {
         localStorage.removeItem('token')
         setUser(null)
@@ -25,6 +36,9 @@ export function AuthProvider({ children }) {
 
   async function login(email, password) {
     const data = await api.login({ email, password })
+    if (!isAdmin(data.user)) {
+      throw new Error('Admin access only')
+    }
     localStorage.setItem('token', data.token)
     setUser(data.user)
     return data.user
