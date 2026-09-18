@@ -32,6 +32,11 @@ export const api = {
     const q = new URLSearchParams(params).toString()
     return request(`/admin/users${q ? `?${q}` : ''}`)
   },
+  createSystemUser: (body) =>
+    request('/admin/users', { method: 'POST', body: JSON.stringify(body) }),
+  updateSystemUser: (id, body) =>
+    request(`/admin/users/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteSystemUser: (id) => request(`/admin/users/${id}`, { method: 'DELETE' }),
   updateUserStatus: (id, status) =>
     request(`/admin/users/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
 
@@ -70,7 +75,10 @@ export const api = {
   updatePackage: (id, body) =>
     request(`/admin/packages/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
 
-  getPayments: () => request('/admin/payments'),
+  getPayments: (params = {}) => {
+    const q = new URLSearchParams(params).toString()
+    return request(`/admin/payments${q ? `?${q}` : ''}`)
+  },
 
   getTemplates: () => request('/admin/templates'),
   upsertTemplate: (body) =>

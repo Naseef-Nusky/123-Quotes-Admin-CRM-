@@ -1,143 +1,35 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { api } from '../api/client.js'
-import {
-  Card,
-  ErrorBanner,
-  Loading,
-  PageHeader,
-  StatusBadge,
-  formatDate,
-  formatMoney,
-} from '../components/ui.jsx'
+import { useState } from 'react'
+import { DUMMY_ADMIN_LEADS } from '../data/dummy.js'
+import { Button, Card } from '../components/ui.jsx'
 
 export default function Dashboard() {
-  const [data, setData] = useState(null)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    api
-      .dashboard()
-      .then(setData)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false))
-  }, [])
-
-  const stats = data?.stats
-  const cards = [
-    { label: 'Customers', value: stats?.customers, to: '/users' },
-    { label: 'Professionals', value: stats?.professionals, to: '/users' },
-    { label: 'Requests', value: stats?.requests, to: '/requests' },
-    { label: 'Leads', value: stats?.leads, to: '/leads' },
-    { label: 'Unlocks', value: stats?.unlocks, to: '/leads' },
-    { label: 'Revenue', value: stats ? formatMoney(stats.revenueCents) : null, to: '/payments' },
-  ]
+  const [locked, setLocked] = useState(false)
 
   return (
-    <div>
-      <PageHeader title="Dashboard" subtitle="Platform overview and recent activity." />
-      <ErrorBanner message={error} />
-      {loading ? (
-        <Loading />
-      ) : (
-        <>
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {cards.map((card) => (
-              <Link
-                key={card.label}
-                to={card.to}
-                className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm transition hover:border-blue/40"
-              >
-                <p className="text-sm font-medium text-slate-500">{card.label}</p>
-                <p className="mt-2 text-3xl font-bold text-navy">{card.value ?? '—'}</p>
-              </Link>
-            ))}
-          </div>
-
-          <div className="mt-8 grid gap-6 lg:grid-cols-2">
-            <Card className="overflow-hidden">
-              <div className="border-b border-slate-100 px-4 py-3">
-                <h2 className="font-semibold">Recent requests</h2>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-canvas text-slate-500">
-                    <tr>
-                      <th className="px-4 py-2 font-medium">Customer</th>
-                      <th className="px-4 py-2 font-medium">Service</th>
-                      <th className="px-4 py-2 font-medium">Status</th>
-                      <th className="px-4 py-2 font-medium">Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(data?.recentRequests || []).map((r) => (
-                      <tr key={r.id} className="border-t border-slate-100">
-                        <td className="px-4 py-2">
-                          {r.customer?.firstName} {r.customer?.lastName}
-                        </td>
-                        <td className="px-4 py-2">{r.service?.name || '—'}</td>
-                        <td className="px-4 py-2">
-                          <StatusBadge status={r.status} />
-                        </td>
-                        <td className="px-4 py-2 whitespace-nowrap text-slate-500">
-                          {formatDate(r.createdAt)}
-                        </td>
-                      </tr>
-                    ))}
-                    {!data?.recentRequests?.length && (
-                      <tr>
-                        <td colSpan={4} className="px-4 py-6 text-center text-slate-500">
-                          No recent requests
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
-
-            <Card className="overflow-hidden">
-              <div className="border-b border-slate-100 px-4 py-3">
-                <h2 className="font-semibold">Recent leads</h2>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-canvas text-slate-500">
-                    <tr>
-                      <th className="px-4 py-2 font-medium">Service</th>
-                      <th className="px-4 py-2 font-medium">Postcode</th>
-                      <th className="px-4 py-2 font-medium">Status</th>
-                      <th className="px-4 py-2 font-medium">Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(data?.recentLeads || []).map((lead) => (
-                      <tr key={lead.id} className="border-t border-slate-100">
-                        <td className="px-4 py-2">{lead.service?.name || '—'}</td>
-                        <td className="px-4 py-2">{lead.postcode}</td>
-                        <td className="px-4 py-2">
-                          <StatusBadge status={lead.status} />
-                        </td>
-                        <td className="px-4 py-2 whitespace-nowrap text-slate-500">
-                          {formatDate(lead.createdAt)}
-                        </td>
-                      </tr>
-                    ))}
-                    {!data?.recentLeads?.length && (
-                      <tr>
-                        <td colSpan={4} className="px-4 py-6 text-center text-slate-500">
-                          No recent leads
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
-          </div>
-        </>
-      )}
+    <div className="space-y-8">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-navy">Dashboard</h1>
+          <p className="mt-1 text-sm text-slate-500">Lead lock controls and platform overview.</p>
+        </div>
+        <Card className="p-4">
+          <p className="text-sm font-semibold text-navy">Lock Lead View :</p>
+          <Button
+            variant={locked ? 'primary' : 'danger'}
+            className="mt-2"
+            onClick={() => setLocked((v) => !v)}
+          >
+            {locked ? 'Click here to Unlock' : 'Click here to Lock'}
+          </Button>
+          <p className="mt-2 max-w-xs text-xs text-slate-500">
+            Click to Lock / Unlock all outgoing leads to Service Providers.
+          </p>
+          <p className="mt-2 text-xs font-semibold text-blue">
+            Status: {locked ? 'LOCKED' : 'UNLOCKED'} · Open leads:{' '}
+            {DUMMY_ADMIN_LEADS.filter((l) => !l.locked).length}
+          </p>
+        </Card>
+      </div>
     </div>
   )
 }

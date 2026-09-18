@@ -15,6 +15,10 @@ const badgeStyles = {
   COMPLETED_PAY: 'bg-emerald-50 text-ok',
   FAILED: 'bg-red-50 text-warn',
   REFUNDED: 'bg-slate-100 text-slate-600',
+  ADMIN: 'bg-blue-50 text-blue',
+  SUPER_ADMIN: 'bg-navy/10 text-navy',
+  CUSTOMER: 'bg-slate-100 text-slate-600',
+  PROFESSIONAL: 'bg-emerald-50 text-ok',
 }
 
 export function StatusBadge({ status }) {

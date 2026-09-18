@@ -1,68 +1,180 @@
-import { NavLink } from 'react-router-dom'
+import { useState } from 'react'
+import { NavLink, useNavigate } from 'react-router-dom'
+import {
+  LayoutDashboard,
+  Lock,
+  Clock3,
+  ListChecks,
+  UserRound,
+  UsersRound,
+  Settings2,
+  LogOut,
+  Menu,
+  X,
+  CreditCard,
+  Wallet,
+  ShoppingBag,
+  ShieldUser,
+  ClipboardCheck,
+  TriangleAlert,
+} from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 
-const links = [
-  { to: '/', label: 'Dashboard', end: true },
-  { to: '/users', label: 'Users' },
-  { to: '/services', label: 'Services' },
-  { to: '/questionnaires', label: 'Questionnaires' },
-  { to: '/requests', label: 'Requests' },
-  { to: '/leads', label: 'Leads' },
-  { to: '/packages', label: 'Token packages' },
-  { to: '/payments', label: 'Payments' },
-  { to: '/templates', label: 'Email templates' },
-  { to: '/settings', label: 'Settings' },
-  { to: '/pages', label: 'Pages' },
-  { to: '/activity', label: 'Activity logs' },
-  { to: '/tokens', label: 'Adjust tokens' },
+const navGroups = [
+  {
+    title: 'Overview',
+    items: [
+      { to: '/dashboard', label: 'Dashboard', end: true, icon: LayoutDashboard },
+      { to: '/business-registration', label: 'Business Registration', icon: ClipboardCheck },
+      { to: '/category-errors', label: 'Category Errors', icon: TriangleAlert },
+      { to: '/system-users', label: 'System Users', icon: ShieldUser },
+    ],
+  },
+  {
+    title: 'Leads',
+    items: [
+      { to: '/locked-leads', label: 'Locked Leads', icon: Lock },
+      { to: '/recent-leads', label: 'Recent Leads', icon: Clock3 },
+      { to: '/leads', label: 'All Leads', icon: ListChecks },
+    ],
+  },
+  {
+    title: 'Professionals',
+    items: [
+      { to: '/recent-pros', label: 'Recent Pro.', icon: UserRound },
+      { to: '/professionals', label: 'Professional', icon: UsersRound },
+      { to: '/pro-mgmt', label: 'Pro.Mgmt', icon: Settings2 },
+    ],
+  },
+  {
+    title: 'Payment Details',
+    items: [
+      { to: '/recent-payment-online', label: 'Recent Payment Online', icon: CreditCard },
+      { to: '/recent-payment', label: 'Recent Payment', icon: Wallet },
+      { to: '/recent-purchases', label: 'Recent purchases', icon: ShoppingBag },
+    ],
+  },
 ]
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth()
+  const navigate = useNavigate()
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  function handleLogout() {
+    logout()
+    navigate('/login')
+  }
+
   const displayName =
+    user?.name ||
     user?.customer?.firstName ||
     user?.professional?.contactName ||
-    user?.email
+    user?.email ||
+    'Admin'
 
-  return (
-    <div className="flex min-h-screen">
-      <aside className="flex w-64 shrink-0 flex-col bg-navy text-white">
-        <div className="flex items-center gap-3 border-b border-line px-5 py-5">
-          <img src="/logo.png" alt="123 Quotes" className="h-10 w-10 rounded-md object-contain" />
+  const sidebar = (
+    <div className="flex h-full flex-col">
+      <div className="border-b border-white/10 px-5 py-5">
+        <div className="flex items-center gap-3">
+          <div className="flex size-11 items-center justify-center rounded-xl bg-white/95 p-1.5 shadow-sm">
+            <img src="/logo.png" alt="123 Quotes" className="h-full w-full object-contain" />
+          </div>
           <div>
-            <p className="font-display text-lg font-bold leading-tight">123 Quotes</p>
-            <p className="text-[11px] uppercase tracking-wider text-muted">Admin CRM</p>
+            <p className="text-base font-bold leading-tight text-white">123 Quotes</p>
+            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-blue-200/80">Admin Panel</p>
           </div>
         </div>
-        <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto p-3">
-          {links.map((link) => (
-            <NavLink
-              key={link.to}
-              to={link.to}
-              end={link.end}
-              className={({ isActive }) =>
-                `rounded-md px-3 py-2 text-sm font-medium transition ${
-                  isActive ? 'bg-blue text-white' : 'text-muted hover:bg-panel hover:text-white'
-                }`
-              }
-            >
-              {link.label}
-            </NavLink>
-          ))}
-        </nav>
-        <div className="border-t border-line p-4">
-          <p className="truncate text-sm font-medium">{displayName}</p>
-          <p className="truncate text-xs text-muted">{user?.email}</p>
+      </div>
+
+      <nav className="flex-1 space-y-5 overflow-y-auto px-3 py-5">
+        {navGroups.map((group) => (
+          <div key={group.title}>
+            <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+              {group.title}
+            </p>
+            <div className="space-y-1">
+              {group.items.map((item) => {
+                const Icon = item.icon
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.end}
+                    onClick={() => setMobileOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
+                        isActive
+                          ? 'bg-blue text-white shadow-lg shadow-blue/25'
+                          : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                      }`
+                    }
+                  >
+                    <Icon className="size-[18px] shrink-0" strokeWidth={1.9} />
+                    {item.label}
+                  </NavLink>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+      </nav>
+
+      <div className="border-t border-white/10 p-4">
+        <div className="rounded-xl bg-white/5 px-3 py-3">
+          <p className="truncate text-sm font-semibold text-white">{displayName}</p>
+          <p className="truncate text-xs text-slate-400">{user?.email}</p>
           <button
             type="button"
-            onClick={logout}
-            className="mt-3 text-xs font-semibold text-muted hover:text-white"
+            onClick={handleLogout}
+            className="mt-3 flex w-full items-center gap-2 rounded-lg bg-white/10 px-3 py-2 text-left text-xs font-semibold text-white transition hover:bg-blue"
           >
-            Sign out
+            <LogOut className="size-3.5" strokeWidth={2} />
+            Logout
           </button>
         </div>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="min-h-screen bg-canvas lg:flex">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 overflow-hidden bg-navy lg:block">
+        {sidebar}
       </aside>
-      <main className="flex-1 overflow-auto p-6 md:p-8">{children}</main>
+
+      {mobileOpen ? (
+        <div className="fixed inset-0 z-40 lg:hidden">
+          <button
+            type="button"
+            className="absolute inset-0 bg-navy/50"
+            aria-label="Close menu"
+            onClick={() => setMobileOpen(false)}
+          />
+          <aside className="absolute inset-y-0 left-0 w-72 bg-navy shadow-2xl">{sidebar}</aside>
+        </div>
+      ) : null}
+
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur lg:px-6">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              className="inline-flex items-center justify-center rounded-lg border border-slate-200 p-2 text-navy lg:hidden"
+              aria-label={mobileOpen ? 'Close sidebar' : 'Open sidebar'}
+              onClick={() => setMobileOpen((v) => !v)}
+            >
+              {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+            </button>
+            <div>
+              <p className="text-sm font-semibold text-navy">Admin Console</p>
+              <p className="text-xs text-slate-500">Manage leads, pros & platform settings</p>
+            </div>
+          </div>
+        </header>
+
+        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+      </div>
     </div>
   )
 }

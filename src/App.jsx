@@ -3,18 +3,16 @@ import { useAuth } from './context/AuthContext.jsx'
 import Layout from './components/Layout.jsx'
 import Login from './pages/Login.jsx'
 import Dashboard from './pages/Dashboard.jsx'
-import Users from './pages/Users.jsx'
-import Services from './pages/Services.jsx'
-import Questionnaires from './pages/Questionnaires.jsx'
-import Requests from './pages/Requests.jsx'
+import LockedLeads from './pages/LockedLeads.jsx'
+import RecentLeads from './pages/RecentLeads.jsx'
+import RecentPros from './pages/RecentPros.jsx'
 import Leads from './pages/Leads.jsx'
-import Packages from './pages/Packages.jsx'
-import Payments from './pages/Payments.jsx'
-import Templates from './pages/Templates.jsx'
-import Settings from './pages/Settings.jsx'
-import Pages from './pages/Pages.jsx'
-import Activity from './pages/Activity.jsx'
-import AdjustTokens from './pages/AdjustTokens.jsx'
+import Professionals from './pages/Professionals.jsx'
+import ProMgmt from './pages/ProMgmt.jsx'
+import PaymentDetails from './pages/PaymentDetails.jsx'
+import SystemUsers from './pages/SystemUsers.jsx'
+import BusinessRegistration from './pages/BusinessRegistration.jsx'
+import CategoryErrors from './pages/CategoryErrors.jsx'
 
 function Protected({ children }) {
   const { user, loading } = useAuth()
@@ -25,7 +23,9 @@ function Protected({ children }) {
       </div>
     )
   }
-  if (!user || user.role !== 'ADMIN') return <Navigate to="/login" replace />
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
+    return <Navigate to="/login" replace />
+  }
   return children
 }
 
@@ -39,20 +39,21 @@ export default function App() {
           <Protected>
             <Layout>
               <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/users" element={<Users />} />
-                <Route path="/services" element={<Services />} />
-                <Route path="/questionnaires" element={<Questionnaires />} />
-                <Route path="/requests" element={<Requests />} />
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/business-registration" element={<BusinessRegistration />} />
+                <Route path="/category-errors" element={<CategoryErrors />} />
+                <Route path="/system-users" element={<SystemUsers />} />
+                <Route path="/locked-leads" element={<LockedLeads />} />
+                <Route path="/recent-leads" element={<RecentLeads />} />
+                <Route path="/recent-pros" element={<RecentPros />} />
                 <Route path="/leads" element={<Leads />} />
-                <Route path="/packages" element={<Packages />} />
-                <Route path="/payments" element={<Payments />} />
-                <Route path="/templates" element={<Templates />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/pages" element={<Pages />} />
-                <Route path="/activity" element={<Activity />} />
-                <Route path="/tokens" element={<AdjustTokens />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
+                <Route path="/professionals" element={<Professionals />} />
+                <Route path="/pro-mgmt" element={<ProMgmt />} />
+                <Route path="/recent-payment-online" element={<PaymentDetails variant="online" />} />
+                <Route path="/recent-payment" element={<PaymentDetails variant="recent" />} />
+                <Route path="/recent-purchases" element={<PaymentDetails variant="purchases" />} />
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Routes>
             </Layout>
           </Protected>
