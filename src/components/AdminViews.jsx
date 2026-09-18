@@ -1,9 +1,4 @@
 import { useMemo, useState } from 'react'
-import {
-  DUMMY_ADMIN_LEADS,
-  DUMMY_BUSINESS_REGISTRATIONS,
-  DUMMY_CATEGORY_ERRORS,
-} from '../data/dummy.js'
 import { Button, Card } from './ui.jsx'
 
 export function LeadSplitView({
@@ -252,5 +247,3 @@ export function DataTable({
     </div>
   )
 }
-
-export { DUMMY_ADMIN_LEADS, DUMMY_BUSINESS_REGISTRATIONS, DUMMY_CATEGORY_ERRORS }

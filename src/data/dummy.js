@@ -333,16 +333,3 @@ export const DUMMY_PURCHASES = [
     date: '2026-09-12 13:20:11',
   },
 ]
-
-export const DUMMY_PRO_MGMT_SETTINGS = [
-  { key: 'site_title', label: 'Site Title', type: 'text', value: '123 Quotes' },
-  { key: 'support_email', label: 'Support Email', type: 'text', value: 'info@123quotes.co.uk' },
-  { key: 'lead_lock_enabled', label: 'Enable Lead Locking', type: 'yesno', value: 'yes' },
-  { key: 'auto_match', label: 'Auto Match Professionals', type: 'yesno', value: 'yes' },
-  { key: 'email_notifications', label: 'Email Notifications', type: 'yesno', value: 'yes' },
-  { key: 'token_cost_default', label: 'Default Token Cost Per Lead', type: 'text', value: '1' },
-  { key: 'max_unlocks', label: 'Max Unlocks Per Lead', type: 'text', value: '5' },
-  { key: 'require_email_verify', label: 'Require Email Verification', type: 'yesno', value: 'yes' },
-  { key: 'show_directory', label: 'Show Public Directory', type: 'yesno', value: 'yes' },
-  { key: 'maintenance_mode', label: 'Maintenance Mode', type: 'yesno', value: 'no' },
-]
