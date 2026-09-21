@@ -1,13 +1,35 @@
-import { DUMMY_ADMIN_LEADS } from '../data/dummy.js'
 import { LeadSplitView } from '../components/AdminViews.jsx'
+import { ErrorBanner } from '../components/ui.jsx'
+import { useAdminLeads } from '../hooks/useAdminLeads.js'
 
 export default function LockedLeads() {
+  const { leads, loading, error, deleteLead, setLeadLock } = useAdminLeads()
+
   return (
-    <LeadSplitView
-      title="Locked Leads"
-      items={DUMMY_ADMIN_LEADS}
-      filterLocked
-      showConfirm
-    />
+    <div>
+      <ErrorBanner message={error} />
+      <LeadSplitView
+        title="Locked Leads"
+        items={leads}
+        filterLocked
+        showConfirm
+        loading={loading}
+        onDelete={async (lead) => {
+          if (!window.confirm(`Delete lead for “${lead.name}”?`)) return
+          try {
+            await deleteLead(lead.id)
+          } catch (err) {
+            window.alert(err.message || 'Delete failed')
+          }
+        }}
+        onConfirm={async () => {
+          try {
+            await setLeadLock(false)
+          } catch (err) {
+            window.alert(err.message || 'Unlock failed')
+          }
+        }}
+      />
+    </div>
   )
 }

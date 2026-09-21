@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { FolderTree, HelpCircle, Plus, Search } from 'lucide-react'
 import { PRO_SERVICES } from '../data/proServices.js'
+import { api } from '../api/client.js'
 import {
   Button,
   Card,
@@ -13,6 +14,7 @@ import {
 } from '../components/ui.jsx'
 
 const STORAGE_KEY = '123quotes_pro_services_v1'
+const SETTING_KEY = 'pro_mgmt'
 const CHILD_TYPES = ['Radio Button', 'Checkbox', 'Dropdown', 'Text']
 
 function slugify(name) {
@@ -34,15 +36,29 @@ function nextQuestionId(services) {
   return max + 1
 }
 
-function loadServices() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return structuredClone(PRO_SERVICES)
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) && parsed.length ? parsed : structuredClone(PRO_SERVICES)
-  } catch {
-    return structuredClone(PRO_SERVICES)
-  }
+function mapApiServicesToTree(services) {
+  return (services || []).map((s, idx) => ({
+    id: s.id || `svc-${idx}`,
+    name: s.name,
+    slug: s.slug || slugify(s.name),
+    description: s.shortDesc || s.description || '',
+    questions: (s.questions || []).map((q, qIdx) => ({
+      id: q.id || qIdx + 1,
+      text: q.label || q.text || 'Question',
+      type:
+        q.type === 'MULTIPLE_CHOICE'
+          ? 'Checkbox'
+          : q.type === 'DROPDOWN'
+            ? 'Dropdown'
+            : q.type === 'TEXT' || q.type === 'TEXTAREA'
+              ? 'Text'
+              : 'Radio Button',
+      answers: (q.options || []).map((o) => ({
+        label: o.label || o.value || '',
+        nextQuestion: 'End',
+      })),
+    })),
+  }))
 }
 
 function emptyAnswer() {
@@ -50,7 +66,8 @@ function emptyAnswer() {
 }
 
 export default function ProMgmt() {
-  const [services, setServices] = useState(() => loadServices())
+  const [services, setServices] = useState(() => structuredClone(PRO_SERVICES))
+  const [hydrated, setHydrated] = useState(false)
   const [q, setQ] = useState('')
   const [selectedId, setSelectedId] = useState(null)
   const [flash, setFlash] = useState('')
@@ -59,8 +76,58 @@ export default function ProMgmt() {
   const [qModal, setQModal] = useState(null)
 
   useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const settings = await api.getSettings()
+        const row = (settings.settings || []).find((s) => s.key === SETTING_KEY)
+        if (Array.isArray(row?.value) && row.value.length) {
+          if (!cancelled) {
+            setServices(row.value)
+            setHydrated(true)
+          }
+          return
+        }
+      } catch {
+        /* fall through */
+      }
+      try {
+        const live = await api.getServices()
+        const tree = mapApiServicesToTree(live.services || [])
+        if (!cancelled && tree.length) {
+          setServices(tree)
+          setHydrated(true)
+          return
+        }
+      } catch {
+        /* fall through */
+      }
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY)
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          if (!cancelled && Array.isArray(parsed) && parsed.length) {
+            setServices(parsed)
+          }
+        }
+      } catch {
+        /* ignore */
+      }
+      if (!cancelled) setHydrated(true)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!hydrated) return
     localStorage.setItem(STORAGE_KEY, JSON.stringify(services))
-  }, [services])
+  }, [services, hydrated])
+
+  async function persistToApi(next) {
+    await api.upsertSetting({ key: SETTING_KEY, value: next })
+  }
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase()
@@ -265,9 +332,14 @@ export default function ProMgmt() {
           <div className="flex flex-wrap gap-2">
             <Button
               variant="secondary"
-              onClick={() => {
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(services))
-                flashMsg('Saved.')
+              onClick={async () => {
+                try {
+                  localStorage.setItem(STORAGE_KEY, JSON.stringify(services))
+                  await persistToApi(services)
+                  flashMsg('Saved to database.')
+                } catch (err) {
+                  setError(err.message || 'Save failed')
+                }
               }}
             >
               Save
@@ -424,9 +496,6 @@ export default function ProMgmt() {
                             <div className="flex flex-wrap items-center gap-2">
                               <span className="inline-flex size-7 items-center justify-center rounded-full bg-blue text-xs font-bold text-white">
                                 {index + 1}
-                              </span>
-                              <span className="rounded bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-500 ring-1 ring-slate-200">
-                                ID {question.id}
                               </span>
                               <span className="rounded bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-500 ring-1 ring-slate-200">
                                 {question.childType}

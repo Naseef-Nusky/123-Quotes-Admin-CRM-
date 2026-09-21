@@ -14,7 +14,7 @@ import {
   CreditCard,
   Wallet,
   ShoppingBag,
-  ShieldUser,
+  Shield,
   ClipboardCheck,
   TriangleAlert,
 } from 'lucide-react'
@@ -27,7 +27,7 @@ const navGroups = [
       { to: '/dashboard', label: 'Dashboard', end: true, icon: LayoutDashboard },
       { to: '/business-registration', label: 'Business Registration', icon: ClipboardCheck },
       { to: '/category-errors', label: 'Category Errors', icon: TriangleAlert },
-      { to: '/system-users', label: 'System Users', icon: ShieldUser },
+      { to: '/system-users', label: 'System Users', icon: Shield },
     ],
   },
   {

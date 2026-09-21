@@ -26,6 +26,8 @@ export const api = {
   login: (body) => request('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
   me: () => request('/auth/me'),
 
+  getDashboard: () => request('/admin/dashboard'),
+
   getUsers: (params = {}) => {
     const q = new URLSearchParams(params).toString()
     return request(`/admin/users${q ? `?${q}` : ''}`)
@@ -38,8 +40,24 @@ export const api = {
   updateUserStatus: (id, status) =>
     request(`/admin/users/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
 
+  updateProfessional: (id, body) =>
+    request(`/admin/professionals/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteProfessional: (id) => request(`/admin/professionals/${id}`, { method: 'DELETE' }),
+
+  getLeads: () => request('/leads/admin/all'),
+  deleteLead: (id) => request(`/leads/admin/${id}`, { method: 'DELETE' }),
+
   getPayments: (params = {}) => {
     const q = new URLSearchParams(params).toString()
     return request(`/admin/payments${q ? `?${q}` : ''}`)
   },
+
+  getSettings: () => request('/admin/settings'),
+  upsertSetting: (body) => request('/admin/settings', { method: 'POST', body: JSON.stringify(body) }),
+
+  getServices: (params = {}) => {
+    const q = new URLSearchParams(params).toString()
+    return request(`/services${q ? `?${q}` : ''}`)
+  },
+  getCategories: () => request('/services/categories'),
 }

@@ -1,12 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../api/client.js'
-import {
-  DUMMY_PAYMENTS_ONLINE,
-  DUMMY_PAYMENTS_RECENT,
-  DUMMY_PURCHASES,
-} from '../data/dummy.js'
 import { DataTable } from '../components/AdminViews.jsx'
-import { Button, StatusBadge, formatDate, formatMoney } from '../components/ui.jsx'
+import { Button, ErrorBanner, StatusBadge, formatDate, formatMoney } from '../components/ui.jsx'
 
 function displayName(user) {
   if (!user) return '—'
@@ -43,7 +38,6 @@ const CONFIG = {
   online: {
     title: 'Recent Payment Online',
     apiType: 'online',
-    dummy: DUMMY_PAYMENTS_ONLINE,
     searchKeys: ['name', 'email', 'phone', 'package', 'method', 'reference', 'status'],
     columns: [
       { key: '#', label: '#', render: (_row, idx) => idx + 1 },
@@ -66,7 +60,6 @@ const CONFIG = {
   recent: {
     title: 'Recent Payment',
     apiType: 'all',
-    dummy: DUMMY_PAYMENTS_RECENT,
     searchKeys: ['name', 'email', 'phone', 'package', 'method', 'reference', 'status'],
     columns: [
       { key: '#', label: '#', render: (_row, idx) => idx + 1 },
@@ -89,7 +82,6 @@ const CONFIG = {
   purchases: {
     title: 'Recent purchases',
     apiType: 'purchases',
-    dummy: DUMMY_PURCHASES,
     searchKeys: ['name', 'email', 'phone', 'package', 'status'],
     columns: [
       { key: '#', label: '#', render: (_row, idx) => idx + 1 },
@@ -112,30 +104,28 @@ const CONFIG = {
 
 export default function PaymentDetails({ variant = 'online' }) {
   const config = CONFIG[variant] || CONFIG.online
-  const [rows, setRows] = useState(config.dummy)
-  const [source, setSource] = useState('demo')
+  const [rows, setRows] = useState([])
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let cancelled = false
     const current = CONFIG[variant] || CONFIG.online
-    setRows(current.dummy)
-    setSource('demo')
+    setLoading(true)
+    setError('')
+    setRows([])
 
     api
       .getPayments({ type: current.apiType })
       .then((data) => {
         if (cancelled) return
-        const list = (data.payments || []).map(mapApiPayment)
-        if (list.length) {
-          setRows(list)
-          setSource('api')
-        }
+        setRows((data.payments || []).map(mapApiPayment))
       })
-      .catch(() => {
-        if (!cancelled) {
-          setRows(current.dummy)
-          setSource('demo')
-        }
+      .catch((err) => {
+        if (!cancelled) setError(err.message || 'Failed to load payments')
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
       })
 
     return () => {
@@ -144,12 +134,13 @@ export default function PaymentDetails({ variant = 'online' }) {
   }, [variant])
 
   const subtitle = useMemo(
-    () => (source === 'api' ? 'Live payment records from the API.' : 'Demo records (API empty or offline).'),
-    [source],
+    () => (loading ? 'Loading payment records…' : 'Live payment records from the API.'),
+    [loading],
   )
 
   return (
     <div>
+      <ErrorBanner message={error} />
       <p className="mb-2 text-sm text-slate-500">{subtitle}</p>
       <DataTable
         title={config.title}

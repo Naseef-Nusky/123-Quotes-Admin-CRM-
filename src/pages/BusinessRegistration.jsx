@@ -1,16 +1,47 @@
-import { useState } from 'react'
-import { DUMMY_BUSINESS_REGISTRATIONS } from '../data/dummy.js'
-import { Button, Card, PageHeader } from '../components/ui.jsx'
+import { useCallback, useEffect, useState } from 'react'
+import { api } from '../api/client.js'
+import { mapPendingRegistration } from '../lib/mappers.js'
+import { Button, Card, ErrorBanner, PageHeader } from '../components/ui.jsx'
 
 export default function BusinessRegistration() {
-  const [regs, setRegs] = useState(DUMMY_BUSINESS_REGISTRATIONS)
+  const [regs, setRegs] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  function approve(id) {
-    setRegs((rows) => rows.filter((r) => r.id !== id))
+  const load = useCallback(async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const data = await api.getUsers({ role: 'PROFESSIONAL', status: 'PENDING' })
+      setRegs((data.users || []).map(mapPendingRegistration))
+    } catch (err) {
+      setError(err.message || 'Failed to load registrations')
+      setRegs([])
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    load()
+  }, [load])
+
+  async function approve(id) {
+    try {
+      await api.updateUserStatus(id, 'ACTIVE')
+      setRegs((rows) => rows.filter((r) => r.id !== id))
+    } catch (err) {
+      setError(err.message || 'Approve failed')
+    }
   }
 
-  function decline(id) {
-    setRegs((rows) => rows.filter((r) => r.id !== id))
+  async function decline(id) {
+    try {
+      await api.updateUserStatus(id, 'INACTIVE')
+      setRegs((rows) => rows.filter((r) => r.id !== id))
+    } catch (err) {
+      setError(err.message || 'Decline failed')
+    }
   }
 
   return (
@@ -19,6 +50,8 @@ export default function BusinessRegistration() {
         title="Business Registration"
         subtitle="Approve or decline pending professional signups."
       />
+      <ErrorBanner message={error} />
+      {loading ? <p className="mb-3 text-sm text-slate-500">Loading…</p> : null}
       <Card className="overflow-hidden p-0">
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-500">
@@ -47,7 +80,7 @@ export default function BusinessRegistration() {
                 </td>
               </tr>
             ))}
-            {!regs.length ? (
+            {!regs.length && !loading ? (
               <tr>
                 <td colSpan={4} className="px-4 py-6 text-center text-slate-500">
                   No pending registrations.

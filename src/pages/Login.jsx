@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
+import { LockKeyhole } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { Button, Input } from '../components/ui.jsx'
 
@@ -36,7 +37,10 @@ export default function Login() {
             alt="123 Quotes"
             className="h-14 w-auto object-contain"
           />
-          <h1 className="mt-4 text-sm font-semibold text-slate-500">Admin CRM Login</h1>
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+            <LockKeyhole className="size-3.5" strokeWidth={2} />
+            Admin CRM Login
+          </div>
         </div>
 
         <div className="mt-6 space-y-4">

@@ -1,6 +1,26 @@
-import { DUMMY_ADMIN_LEADS } from '../data/dummy.js'
 import { LeadSplitView } from '../components/AdminViews.jsx'
+import { ErrorBanner } from '../components/ui.jsx'
+import { useAdminLeads } from '../hooks/useAdminLeads.js'
 
 export default function RecentLeads() {
-  return <LeadSplitView title="Recent Leads" items={DUMMY_ADMIN_LEADS} />
+  const { leads, loading, error, deleteLead } = useAdminLeads()
+
+  return (
+    <div>
+      <ErrorBanner message={error} />
+      <LeadSplitView
+        title="Recent Leads"
+        items={leads}
+        loading={loading}
+        onDelete={async (lead) => {
+          if (!window.confirm(`Delete lead for “${lead.name}”?`)) return
+          try {
+            await deleteLead(lead.id)
+          } catch (err) {
+            window.alert(err.message || 'Delete failed')
+          }
+        }}
+      />
+    </div>
+  )
 }

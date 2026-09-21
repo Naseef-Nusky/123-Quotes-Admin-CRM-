@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { MapPin, Zap, Phone, Mail } from 'lucide-react'
 import { Button, Card } from './ui.jsx'
 
 export function LeadSplitView({
@@ -7,6 +8,9 @@ export function LeadSplitView({
   items,
   filterLocked,
   showConfirm = false,
+  onDelete,
+  onConfirm,
+  loading = false,
 }) {
   const [q, setQ] = useState('')
   const list = useMemo(() => {
@@ -42,6 +46,7 @@ export function LeadSplitView({
                 onChange={(e) => setQ(e.target.value)}
               />
             </div>
+            {loading ? <p className="p-4 text-sm text-slate-500">Loading…</p> : null}
             {list.map((lead) => (
               <button
                 key={lead.id}
@@ -60,8 +65,12 @@ export function LeadSplitView({
                 <p className="mt-1 font-bold text-navy">{lead.service}</p>
                 <p className="mt-1 line-clamp-2 text-xs text-slate-500">{lead.snippet}</p>
                 <div className="mt-2 flex items-center gap-3 text-xs text-slate-500">
-                  <span>📍 {lead.postcode}</span>
-                  <span>⚡ {lead.interest}</span>
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin className="size-3.5 text-blue" strokeWidth={2} /> {lead.postcode}
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <Zap className="size-3.5 text-blue" strokeWidth={2} /> {lead.interest}
+                  </span>
                 </div>
               </button>
             ))}
@@ -79,15 +88,29 @@ export function LeadSplitView({
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <Button variant="danger">Delete User</Button>
-                    {showConfirm ? <Button variant="primary">Confirm</Button> : null}
+                    <Button
+                      variant="danger"
+                      onClick={() => onDelete?.(selected)}
+                      disabled={!onDelete}
+                    >
+                      Delete User
+                    </Button>
+                    {showConfirm ? (
+                      <Button variant="primary" onClick={() => onConfirm?.(selected)}>
+                        Confirm
+                      </Button>
+                    ) : null}
                   </div>
                 </div>
 
                 <p className="mt-4 text-lg font-bold text-navy">{selected.service}</p>
-                <div className="mt-3 space-y-1 text-sm text-slate-600">
-                  <p>📞 {selected.phone}</p>
-                  <p>✉️ {selected.email}</p>
+                <div className="mt-3 space-y-1.5 text-sm text-slate-600">
+                  <p className="inline-flex items-center gap-2">
+                    <Phone className="size-4 text-blue" strokeWidth={2} /> {selected.phone}
+                  </p>
+                  <p className="inline-flex items-center gap-2">
+                    <Mail className="size-4 text-blue" strokeWidth={2} /> {selected.email}
+                  </p>
                 </div>
 
                 <div className="mt-8">
