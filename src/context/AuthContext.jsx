@@ -18,21 +18,7 @@ export function AuthProvider({ children }) {
       return
     }
     if (token === 'demo-admin-token' || token === 'demo-super-admin-token') {
-      setUser(
-        token === 'demo-super-admin-token'
-          ? {
-              id: 'demo-super-admin',
-              email: 'superadmin@123quotes.com',
-              role: 'SUPER_ADMIN',
-              name: 'Super Admin',
-            }
-          : {
-              id: 'demo-admin',
-              email: 'admin@123quotes.com',
-              role: 'ADMIN',
-              name: 'Platform Admin',
-            },
-      )
+      localStorage.removeItem('token')
       setLoading(false)
       return
     }
@@ -54,32 +40,13 @@ export function AuthProvider({ children }) {
   }, [])
 
   async function login(email, password) {
-    try {
-      const data = await api.login({ email, password })
-      if (!isAdmin(data.user)) {
-        throw new Error('Admin access only')
-      }
-      localStorage.setItem('token', data.token)
-      setUser(data.user)
-      return data.user
-    } catch (err) {
-      // Demo fallback when API/DB is unavailable
-      if (
-        String(email).toLowerCase() === 'superadmin@123quotes.com' &&
-        String(password) === 'superadmin123'
-      ) {
-        const demoUser = {
-          id: 'demo-super-admin',
-          email: 'superadmin@123quotes.com',
-          role: 'SUPER_ADMIN',
-          name: 'Super Admin',
-        }
-        localStorage.setItem('token', 'demo-super-admin-token')
-        setUser(demoUser)
-        return demoUser
-      }
-      throw err
+    const data = await api.login({ email, password })
+    if (!isAdmin(data.user)) {
+      throw new Error('Admin access only')
     }
+    localStorage.setItem('token', data.token)
+    setUser(data.user)
+    return data.user
   }
 
   function logout() {

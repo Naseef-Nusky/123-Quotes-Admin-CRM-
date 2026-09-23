@@ -50,7 +50,7 @@ export default function App() {
                 <Route path="/leads" element={<Leads />} />
                 <Route path="/professionals" element={<Professionals />} />
                 <Route path="/pro-mgmt" element={<ProMgmt />} />
-                <Route path="/recent-payment-online" element={<PaymentDetails variant="online" />} />
+                <Route path="/recent-payment-online" element={<Navigate to="/recent-payment" replace />} />
                 <Route path="/recent-payment" element={<PaymentDetails variant="recent" />} />
                 <Route path="/recent-purchases" element={<PaymentDetails variant="purchases" />} />
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />

@@ -13,7 +13,6 @@ import {
   Textarea,
 } from '../components/ui.jsx'
 
-const STORAGE_KEY = '123quotes_pro_services_v1'
 const SETTING_KEY = 'pro_mgmt'
 const CHILD_TYPES = ['Radio Button', 'Checkbox', 'Dropdown', 'Text']
 
@@ -96,24 +95,17 @@ export default function ProMgmt() {
         const tree = mapApiServicesToTree(live.services || [])
         if (!cancelled && tree.length) {
           setServices(tree)
+          await api.upsertSetting({ key: SETTING_KEY, value: tree }).catch(() => {})
           setHydrated(true)
           return
         }
-      } catch {
-        /* fall through */
+      } catch (err) {
+        if (!cancelled) setError(err.message || 'Failed to load services from database')
       }
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY)
-        if (raw) {
-          const parsed = JSON.parse(raw)
-          if (!cancelled && Array.isArray(parsed) && parsed.length) {
-            setServices(parsed)
-          }
-        }
-      } catch {
-        /* ignore */
+      if (!cancelled) {
+        setServices(structuredClone(PRO_SERVICES))
+        setHydrated(true)
       }
-      if (!cancelled) setHydrated(true)
     })()
     return () => {
       cancelled = true
@@ -121,9 +113,9 @@ export default function ProMgmt() {
   }, [])
 
   useEffect(() => {
+    // keep browser cache as offline draft only after DB hydrate
     if (!hydrated) return
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(services))
-  }, [services, hydrated])
+  }, [hydrated])
 
   async function persistToApi(next) {
     await api.upsertSetting({ key: SETTING_KEY, value: next })
@@ -334,7 +326,6 @@ export default function ProMgmt() {
               variant="secondary"
               onClick={async () => {
                 try {
-                  localStorage.setItem(STORAGE_KEY, JSON.stringify(services))
                   await persistToApi(services)
                   flashMsg('Saved to database.')
                 } catch (err) {

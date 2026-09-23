@@ -27,7 +27,7 @@ function mapApiPayment(p) {
     package: p.package?.name || (p.subscriptionId ? 'Subscription' : 'Payment'),
     tokens: tokens ?? '—',
     amount: formatMoney(p.amountCents, p.currency || 'GBP'),
-    method: String(p.provider || 'online').replace(/^\w/, (c) => c.toUpperCase()),
+    method: 'Square',
     status: p.status,
     date: formatDate(p.createdAt),
     reference: p.providerPaymentId || p.id.slice(0, 8),
@@ -35,32 +35,10 @@ function mapApiPayment(p) {
 }
 
 const CONFIG = {
-  online: {
-    title: 'Recent Payment Online',
-    apiType: 'online',
-    searchKeys: ['name', 'email', 'phone', 'package', 'method', 'reference', 'status'],
-    columns: [
-      { key: '#', label: '#', render: (_row, idx) => idx + 1 },
-      { key: 'name', label: 'Name' },
-      { key: 'email', label: 'Email' },
-      { key: 'phone', label: 'Contact No' },
-      { key: 'package', label: 'Package' },
-      { key: 'amount', label: 'Amount' },
-      { key: 'method', label: 'Method' },
-      { key: 'status', label: 'Status', render: (r) => <StatusBadge status={r.status} /> },
-      { key: 'date', label: 'Date' },
-      { key: 'reference', label: 'Reference' },
-      {
-        key: 'action',
-        label: 'Action',
-        render: () => <Button variant="secondary">View</Button>,
-      },
-    ],
-  },
   recent: {
-    title: 'Recent Payment',
-    apiType: 'all',
-    searchKeys: ['name', 'email', 'phone', 'package', 'method', 'reference', 'status'],
+    title: 'Square Payments',
+    apiType: 'square',
+    searchKeys: ['name', 'email', 'phone', 'package', 'reference', 'status'],
     columns: [
       { key: '#', label: '#', render: (_row, idx) => idx + 1 },
       { key: 'name', label: 'Name' },
@@ -91,6 +69,7 @@ const CONFIG = {
       { key: 'package', label: 'Package' },
       { key: 'tokens', label: 'Tokens' },
       { key: 'amount', label: 'Amount' },
+      { key: 'method', label: 'Method' },
       { key: 'status', label: 'Status', render: (r) => <StatusBadge status={r.status} /> },
       { key: 'date', label: 'Date' },
       {
@@ -102,15 +81,15 @@ const CONFIG = {
   },
 }
 
-export default function PaymentDetails({ variant = 'online' }) {
-  const config = CONFIG[variant] || CONFIG.online
+export default function PaymentDetails({ variant = 'recent' }) {
+  const config = CONFIG[variant] || CONFIG.recent
   const [rows, setRows] = useState([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let cancelled = false
-    const current = CONFIG[variant] || CONFIG.online
+    const current = CONFIG[variant] || CONFIG.recent
     setLoading(true)
     setError('')
     setRows([])
@@ -134,7 +113,10 @@ export default function PaymentDetails({ variant = 'online' }) {
   }, [variant])
 
   const subtitle = useMemo(
-    () => (loading ? 'Loading payment records…' : 'Live payment records from the API.'),
+    () =>
+      loading
+        ? 'Loading Square payment records…'
+        : 'Square is the only payment method on this platform.',
     [loading],
   )
 

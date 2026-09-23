@@ -12,7 +12,6 @@ import {
   Menu,
   X,
   CreditCard,
-  Wallet,
   ShoppingBag,
   Shield,
   ClipboardCheck,
@@ -49,8 +48,7 @@ const navGroups = [
   {
     title: 'Payment Details',
     items: [
-      { to: '/recent-payment-online', label: 'Recent Payment Online', icon: CreditCard },
-      { to: '/recent-payment', label: 'Recent Payment', icon: Wallet },
+      { to: '/recent-payment', label: 'Square Payments', icon: CreditCard },
       { to: '/recent-purchases', label: 'Recent purchases', icon: ShoppingBag },
     ],
   },
