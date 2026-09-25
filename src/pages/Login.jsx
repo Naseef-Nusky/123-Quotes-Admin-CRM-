@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
-import { LockKeyhole } from 'lucide-react'
+import { Eye, EyeOff, LockKeyhole } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
-import { Button, Input } from '../components/ui.jsx'
+import { Button } from '../components/ui.jsx'
 
 export default function Login() {
   const { user, login } = useAuth()
   const [email, setEmail] = useState('superadmin@123quotes.com')
   const [password, setPassword] = useState('superadmin123')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -44,20 +45,40 @@ export default function Login() {
         </div>
 
         <div className="mt-6 space-y-4">
-          <Input
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <Input
-            label="Password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          <label className="block text-sm font-semibold text-navy">
+            Email
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="mt-1 w-full rounded-md border border-slate-200 px-3 py-2.5 text-sm font-normal outline-none focus:border-blue focus:ring-2 focus:ring-blue/20"
+            />
+          </label>
+          <label className="block text-sm font-semibold text-navy">
+            Password
+            <div className="relative mt-1">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full rounded-md border border-slate-200 px-3 py-2.5 pr-11 text-sm font-normal outline-none focus:border-blue focus:ring-2 focus:ring-blue/20"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-navy"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? (
+                  <EyeOff className="size-4" strokeWidth={2} />
+                ) : (
+                  <Eye className="size-4" strokeWidth={2} />
+                )}
+              </button>
+            </div>
+          </label>
         </div>
 
         {error && <p className="mt-3 text-sm text-warn">{error}</p>}

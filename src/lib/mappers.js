@@ -32,8 +32,10 @@ function maskPostcode(pc) {
 export function mapAdminLead(lead, leadViewLocked = false) {
   const customer = lead.request?.customer
   const user = customer?.user
+  const firstName = customer?.firstName || ''
+  const lastName = customer?.lastName || ''
   const name = customer
-    ? `${customer.firstName || ''} ${customer.lastName || ''}`.trim() || 'Lead'
+    ? `${firstName} ${lastName}`.trim() || 'Lead'
     : 'Lead'
   const answers = lead.request?.answers || []
   const details = answers.map((a) => ({
@@ -54,16 +56,20 @@ export function mapAdminLead(lead, leadViewLocked = false) {
   return {
     id: lead.id,
     name,
+    firstName,
+    lastName,
     ago: timeAgo(lead.createdAt),
     service: lead.service?.name || '—',
     snippet,
     postcode: maskPostcode(lead.postcode),
+    postcodeRaw: lead.postcode || customer?.postcode || '',
     interest: lead.matches?.length || lead.matchedCount || lead.tokenCost || 0,
     phone: customer?.phone || '—',
     email: user?.email || '—',
     locked,
     date: formatDateTime(lead.createdAt),
     status: lead.status,
+    summary: lead.summary || '',
     details: details.length ? details : [{ q: 'Summary', a: lead.summary || '—' }],
   }
 }

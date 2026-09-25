@@ -3,7 +3,7 @@ import { ErrorBanner } from '../components/ui.jsx'
 import { useAdminLeads } from '../hooks/useAdminLeads.js'
 
 export default function LockedLeads() {
-  const { leads, loading, error, deleteLead, setLeadLock } = useAdminLeads()
+  const { leads, loading, error, deleteLead, updateLead, setLeadLock } = useAdminLeads()
 
   return (
     <div>
@@ -14,6 +14,7 @@ export default function LockedLeads() {
         filterLocked
         showConfirm
         loading={loading}
+        onEdit={updateLead}
         onDelete={async (lead) => {
           if (!window.confirm(`Delete lead for “${lead.name}”?`)) return
           try {

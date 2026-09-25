@@ -43,8 +43,18 @@ export const api = {
   updateProfessional: (id, body) =>
     request(`/admin/professionals/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteProfessional: (id) => request(`/admin/professionals/${id}`, { method: 'DELETE' }),
+  createProfessional: (body) =>
+    request('/admin/professionals', { method: 'POST', body: JSON.stringify(body) }),
+
+  createCustomer: (body) =>
+    request('/admin/customers', { method: 'POST', body: JSON.stringify(body) }),
+  updateCustomer: (id, body) =>
+    request(`/admin/customers/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteCustomer: (id) => request(`/admin/customers/${id}`, { method: 'DELETE' }),
 
   getLeads: () => request('/leads/admin/all'),
+  updateLead: (id, body) =>
+    request(`/leads/admin/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteLead: (id) => request(`/leads/admin/${id}`, { method: 'DELETE' }),
 
   getPayments: (params = {}) => {
@@ -60,4 +70,24 @@ export const api = {
     return request(`/services${q ? `?${q}` : ''}`)
   },
   getCategories: () => request('/services/categories'),
+  manageServices: () => request('/services/manage/all'),
+  createService: (body) =>
+    request('/services/manage', { method: 'POST', body: JSON.stringify(body) }),
+  updateService: (id, body) =>
+    request(`/services/manage/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteService: (id) => request(`/services/manage/${id}`, { method: 'DELETE' }),
+  createCategory: (body) =>
+    request('/services/manage/categories', { method: 'POST', body: JSON.stringify(body) }),
+  updateCategory: (id, body) =>
+    request(`/services/manage/categories/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteCategory: (id) =>
+    request(`/services/manage/categories/${id}`, { method: 'DELETE' }),
+
+  getQuestions: (serviceId) =>
+    request(`/questions${serviceId ? `?serviceId=${encodeURIComponent(serviceId)}` : ''}`),
+  createQuestion: (body) =>
+    request('/questions', { method: 'POST', body: JSON.stringify(body) }),
+  updateQuestion: (id, body) =>
+    request(`/questions/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deleteQuestion: (id) => request(`/questions/${id}`, { method: 'DELETE' }),
 }

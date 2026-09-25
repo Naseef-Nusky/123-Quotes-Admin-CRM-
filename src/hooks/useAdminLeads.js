@@ -37,11 +37,23 @@ export function useAdminLeads() {
     setLeads((rows) => rows.filter((r) => r.id !== id))
   }
 
+  async function updateLead(id, body) {
+    const data = await api.updateLead(id, body)
+    const mapped = mapAdminLead(data.lead, leadViewLocked)
+    setLeads((rows) => rows.map((r) => (r.id === id ? mapped : r)))
+    return mapped
+  }
+
   async function setLeadLock(next) {
     await api.upsertSetting({ key: 'lead_view_locked', value: next })
     setLeadViewLocked(next)
-    setLeads((rows) => rows.map((r) => ({ ...r, locked: next || r.status === 'CLOSED' || r.status === 'CANCELLED' })))
+    setLeads((rows) =>
+      rows.map((r) => ({
+        ...r,
+        locked: next || r.status === 'CLOSED' || r.status === 'CANCELLED',
+      })),
+    )
   }
 
-  return { leads, loading, error, reload, deleteLead, leadViewLocked, setLeadLock }
+  return { leads, loading, error, reload, deleteLead, updateLead, leadViewLocked, setLeadLock }
 }

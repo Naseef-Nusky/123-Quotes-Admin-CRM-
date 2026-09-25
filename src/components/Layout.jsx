@@ -27,6 +27,7 @@ const navGroups = [
       { to: '/business-registration', label: 'Business Registration', icon: ClipboardCheck },
       { to: '/category-errors', label: 'Category Errors', icon: TriangleAlert },
       { to: '/system-users', label: 'System Users', icon: Shield },
+      { to: '/customers', label: 'Customers', icon: UsersRound },
     ],
   },
   {

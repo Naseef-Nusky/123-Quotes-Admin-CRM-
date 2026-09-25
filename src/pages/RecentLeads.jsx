@@ -3,7 +3,7 @@ import { ErrorBanner } from '../components/ui.jsx'
 import { useAdminLeads } from '../hooks/useAdminLeads.js'
 
 export default function RecentLeads() {
-  const { leads, loading, error, deleteLead } = useAdminLeads()
+  const { leads, loading, error, deleteLead, updateLead } = useAdminLeads()
 
   return (
     <div>
@@ -12,6 +12,7 @@ export default function RecentLeads() {
         title="Recent Leads"
         items={leads}
         loading={loading}
+        onEdit={updateLead}
         onDelete={async (lead) => {
           if (!window.confirm(`Delete lead for “${lead.name}”?`)) return
           try {
