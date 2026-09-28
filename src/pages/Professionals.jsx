@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react'
 import { api } from '../api/client.js'
 import { mapAdminProfessional } from '../lib/mappers.js'
 import BusinessAddWizard from '../components/BusinessAddWizard.jsx'
+import PhoneInput from '../components/PhoneInput.jsx'
 import { DataTable } from '../components/AdminViews.jsx'
 import {
   Button,
@@ -14,12 +15,19 @@ import {
   StatusBadge,
   Textarea,
 } from '../components/ui.jsx'
+import {
+  DEFAULT_COUNTRY_CODE,
+  dialForCountry,
+  formatIntlPhone,
+  parseIntlPhone,
+} from '../data/countryDialCodes.js'
 
 const STATUSES = ['ACTIVE', 'PENDING', 'SUSPENDED', 'INACTIVE']
 
 const emptyForm = {
   name: '',
   phone: '',
+  countryCode: DEFAULT_COUNTRY_CODE,
   email: '',
   type: '',
   company: '',
@@ -73,11 +81,13 @@ export default function Professionals() {
 
   function openEdit(pro) {
     const raw = rawUsers.find((u) => u.id === pro.id)
+    const parsed = parseIntlPhone(pro.phone || '')
     setMode('edit')
     setActive(pro)
     setForm({
       name: pro.name || '',
-      phone: pro.phone || '',
+      phone: parsed.localNumber,
+      countryCode: parsed.countryCode || DEFAULT_COUNTRY_CODE,
       email: pro.email || '',
       type: pro.type === '—' ? '' : pro.type || '',
       company: pro.company || '',
@@ -122,7 +132,9 @@ export default function Professionals() {
       const body = {
         contactName: form.name.trim(),
         email: form.email.trim(),
-        phone: form.phone.trim(),
+        phone: form.phone
+          ? formatIntlPhone(dialForCountry(form.countryCode), form.phone)
+          : '',
         companyName: form.company.trim(),
         bio: form.details.trim() || 'No Additional Details',
         type: form.type.trim(),
@@ -242,11 +254,17 @@ export default function Professionals() {
               onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
               required
             />
-            <Input
-              label="Contact No"
-              value={form.phone}
-              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-            />
+            <label className="block text-sm font-semibold text-navy">
+              Contact No
+              <div className="mt-1 font-normal">
+                <PhoneInput
+                  dialCode={form.countryCode || DEFAULT_COUNTRY_CODE}
+                  onDialCodeChange={(code) => setForm((f) => ({ ...f, countryCode: code }))}
+                  value={form.phone || ''}
+                  onChange={(v) => setForm((f) => ({ ...f, phone: v }))}
+                />
+              </div>
+            </label>
             <Input
               label="Postcode"
               value={form.postcode}

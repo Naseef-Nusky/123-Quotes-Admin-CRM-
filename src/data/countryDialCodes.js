@@ -192,3 +192,40 @@ export function formatIntlPhone(dial, localNumber) {
   if (!digits) return ''
   return `+${code}${digits}`
 }
+
+/** Split a stored phone into country code + local digits for PhoneInput. */
+export function parseIntlPhone(raw, fallbackCountry = DEFAULT_COUNTRY_CODE) {
+  const cleaned = String(raw || '').trim()
+  if (!cleaned || cleaned === '—') {
+    return { countryCode: fallbackCountry, localNumber: '' }
+  }
+
+  const digits = cleaned.replace(/\D/g, '')
+  if (!digits) {
+    return { countryCode: fallbackCountry, localNumber: '' }
+  }
+
+  const sorted = [...COUNTRY_DIAL_CODES].sort((a, b) => b.dial.length - a.dial.length)
+  for (const c of sorted) {
+    if (!digits.startsWith(c.dial) || digits.length <= c.dial.length) continue
+    const sameDial = sorted.filter((x) => x.dial === c.dial)
+    const preferred =
+      sameDial.length > 1 ? sameDial.find((x) => x.code === fallbackCountry) || c : c
+    return {
+      countryCode: preferred.code,
+      localNumber: digits.slice(preferred.dial.length),
+    }
+  }
+
+  if (digits.startsWith('0')) {
+    return { countryCode: fallbackCountry, localNumber: digits.replace(/^0+/, '') }
+  }
+
+  return { countryCode: fallbackCountry, localNumber: digits }
+}
+
+export function dialForCountry(countryCode) {
+  return (
+    COUNTRY_DIAL_CODES.find((c) => c.code === countryCode)?.dial || DEFAULT_DIAL_CODE
+  )
+}

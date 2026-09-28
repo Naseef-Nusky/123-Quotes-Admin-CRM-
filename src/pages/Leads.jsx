@@ -1,6 +1,13 @@
 import { useState } from 'react'
 import { DataTable, LeadAnswerField } from '../components/AdminViews.jsx'
+import PhoneInput from '../components/PhoneInput.jsx'
 import { Button, ErrorBanner, Input, Modal, Select } from '../components/ui.jsx'
+import {
+  DEFAULT_COUNTRY_CODE,
+  dialForCountry,
+  formatIntlPhone,
+  parseIntlPhone,
+} from '../data/countryDialCodes.js'
 import { useAdminLeads } from '../hooks/useAdminLeads.js'
 
 const LEAD_STATUSES = ['OPEN', 'MATCHED', 'PARTIALLY_UNLOCKED', 'CLOSED', 'CANCELLED']
@@ -13,12 +20,14 @@ export default function Leads() {
   const [formError, setFormError] = useState('')
 
   function openEdit(row) {
+    const parsed = parseIntlPhone(row.phone === '—' ? '' : row.phone || '')
     setEditing(row)
     setForm({
       firstName: row.firstName || '',
       lastName: row.lastName || '',
       email: row.email === '—' ? '' : row.email || '',
-      phone: row.phone === '—' ? '' : row.phone || '',
+      phone: parsed.localNumber,
+      countryCode: parsed.countryCode || DEFAULT_COUNTRY_CODE,
       postcode: row.postcodeRaw || '',
       status: row.status || 'OPEN',
       details: (row.details || []).map((d) => ({
@@ -57,7 +66,9 @@ export default function Leads() {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         email: form.email.trim(),
-        phone: form.phone.trim(),
+        phone: form.phone
+          ? formatIntlPhone(dialForCountry(form.countryCode), form.phone)
+          : '',
         postcode: form.postcode.trim(),
         status: form.status,
         summary,
@@ -137,11 +148,17 @@ export default function Leads() {
               value={form.email}
               onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
             />
-            <Input
-              label="Phone"
-              value={form.phone}
-              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-            />
+            <label className="block text-sm font-semibold text-navy">
+              Phone
+              <div className="mt-1 font-normal">
+                <PhoneInput
+                  dialCode={form.countryCode || DEFAULT_COUNTRY_CODE}
+                  onDialCodeChange={(code) => setForm((f) => ({ ...f, countryCode: code }))}
+                  value={form.phone || ''}
+                  onChange={(v) => setForm((f) => ({ ...f, phone: v }))}
+                />
+              </div>
+            </label>
             <Input
               label="Postcode"
               value={form.postcode}

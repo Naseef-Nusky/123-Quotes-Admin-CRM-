@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { api } from '../api/client.js'
 import { DataTable } from '../components/AdminViews.jsx'
+import PhoneInput from '../components/PhoneInput.jsx'
 import {
   Button,
   ErrorBanner,
@@ -12,6 +13,12 @@ import {
   StatusBadge,
   formatDate,
 } from '../components/ui.jsx'
+import {
+  DEFAULT_COUNTRY_CODE,
+  dialForCountry,
+  formatIntlPhone,
+  parseIntlPhone,
+} from '../data/countryDialCodes.js'
 
 const STATUSES = ['ACTIVE', 'PENDING', 'SUSPENDED', 'INACTIVE']
 
@@ -20,6 +27,7 @@ const emptyForm = {
   lastName: '',
   email: '',
   phone: '',
+  countryCode: DEFAULT_COUNTRY_CODE,
   postcode: '',
   status: 'ACTIVE',
   password: '',
@@ -89,13 +97,15 @@ export default function Customers() {
   }
 
   function openEdit(u) {
+    const parsed = parseIntlPhone(u.customer?.phone || '')
     setMode('edit')
     setActive(u)
     setForm({
       firstName: u.customer?.firstName || '',
       lastName: u.customer?.lastName || '',
       email: u.email || '',
-      phone: u.customer?.phone || '',
+      phone: parsed.localNumber,
+      countryCode: parsed.countryCode || DEFAULT_COUNTRY_CODE,
       postcode: u.customer?.postcode || '',
       status: u.status || 'ACTIVE',
       password: '',
@@ -132,7 +142,9 @@ export default function Customers() {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         email: form.email.trim(),
-        phone: form.phone.trim(),
+        phone: form.phone
+          ? formatIntlPhone(dialForCountry(form.countryCode), form.phone)
+          : '',
         postcode: form.postcode.trim(),
         status: form.status,
       }
@@ -270,11 +282,17 @@ export default function Customers() {
               onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
               required
             />
-            <Input
-              label="Phone"
-              value={form.phone}
-              onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-            />
+            <label className="block text-sm font-semibold text-navy">
+              Phone
+              <div className="mt-1 font-normal">
+                <PhoneInput
+                  dialCode={form.countryCode || DEFAULT_COUNTRY_CODE}
+                  onDialCodeChange={(code) => setForm((f) => ({ ...f, countryCode: code }))}
+                  value={form.phone || ''}
+                  onChange={(v) => setForm((f) => ({ ...f, phone: v }))}
+                />
+              </div>
+            </label>
             <Input
               label="Postcode"
               value={form.postcode}
