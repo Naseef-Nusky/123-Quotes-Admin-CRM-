@@ -9,6 +9,7 @@ import RecentPros from './pages/RecentPros.jsx'
 import Leads from './pages/Leads.jsx'
 import Professionals from './pages/Professionals.jsx'
 import ProMgmt from './pages/ProMgmt.jsx'
+import Categories from './pages/Categories.jsx'
 import PaymentDetails from './pages/PaymentDetails.jsx'
 import SystemUsers from './pages/SystemUsers.jsx'
 import BusinessRegistration from './pages/BusinessRegistration.jsx'
@@ -20,7 +21,10 @@ function Protected({ children }) {
   if (loading) {
     return (
       <div className="grid min-h-screen place-items-center bg-canvas text-slate-500">
-        Loading…
+        <div className="text-center">
+          <div className="mx-auto mb-3 size-8 animate-spin rounded-full border-2 border-blue border-t-transparent" />
+          <p className="text-sm">Loading CRM…</p>
+        </div>
       </div>
     )
   }
@@ -51,6 +55,7 @@ export default function App() {
                 <Route path="/recent-pros" element={<RecentPros />} />
                 <Route path="/leads" element={<Leads />} />
                 <Route path="/professionals" element={<Professionals />} />
+                <Route path="/categories" element={<Categories />} />
                 <Route path="/pro-mgmt" element={<ProMgmt />} />
                 <Route path="/recent-payment-online" element={<Navigate to="/recent-payment" replace />} />
                 <Route path="/recent-payment" element={<PaymentDetails variant="recent" />} />

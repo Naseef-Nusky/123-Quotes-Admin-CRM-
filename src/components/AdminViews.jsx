@@ -1,8 +1,118 @@
 import { useMemo, useState } from 'react'
 import { MapPin, Zap, Phone, Mail } from 'lucide-react'
-import { Button, Card, Input, Modal, Select } from './ui.jsx'
+import { Button, Card, Input, Modal, Select, Textarea } from './ui.jsx'
 
 const LEAD_STATUSES = ['OPEN', 'MATCHED', 'PARTIALLY_UNLOCKED', 'CLOSED', 'CANCELLED']
+
+function splitMultiValue(value) {
+  if (Array.isArray(value)) return value
+  return String(value || '')
+    .split(',')
+    .map((v) => v.trim())
+    .filter(Boolean)
+}
+
+export function LeadAnswerField({ detail, onChange }) {
+  const options = detail.options || []
+  const type = detail.type || 'TEXT'
+
+  if (type === 'DROPDOWN' && options.length) {
+    const values = new Set(options.map((o) => o.value))
+    const current = values.has(detail.a) ? detail.a : ''
+    return (
+      <Select label={detail.q} value={current} onChange={(e) => onChange(e.target.value)}>
+        <option value="">Select…</option>
+        {options.map((opt) => (
+          <option key={opt.id || opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+        {detail.a && !values.has(detail.a) ? (
+          <option value={detail.a}>{detail.a} (current)</option>
+        ) : null}
+      </Select>
+    )
+  }
+
+  if (type === 'SINGLE_CHOICE' && options.length) {
+    return (
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-semibold text-navy">{detail.q}</legend>
+        <div className="space-y-2">
+          {options.map((opt) => (
+            <label
+              key={opt.id || opt.value}
+              className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+                detail.a === opt.value
+                  ? 'border-blue bg-blue/5 text-navy'
+                  : 'border-slate-200 bg-white text-slate-600'
+              }`}
+            >
+              <input
+                type="radio"
+                name={`lead-q-${detail.questionId || detail.q}`}
+                className="size-4 accent-blue"
+                checked={detail.a === opt.value}
+                onChange={() => onChange(opt.value)}
+              />
+              {opt.label}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+    )
+  }
+
+  if (type === 'MULTIPLE_CHOICE' && options.length) {
+    const selected = splitMultiValue(detail.a)
+    return (
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-semibold text-navy">{detail.q}</legend>
+        <div className="space-y-2">
+          {options.map((opt) => {
+            const checked = selected.includes(opt.value)
+            return (
+              <label
+                key={opt.id || opt.value}
+                className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+                  checked ? 'border-blue bg-blue/5 text-navy' : 'border-slate-200 bg-white text-slate-600'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  className="size-4 accent-blue"
+                  checked={checked}
+                  onChange={() => {
+                    const next = checked
+                      ? selected.filter((v) => v !== opt.value)
+                      : [...selected, opt.value]
+                    onChange(next.join(', '))
+                  }}
+                />
+                {opt.label}
+              </label>
+            )
+          })}
+        </div>
+      </fieldset>
+    )
+  }
+
+  if (type === 'TEXT') {
+    return (
+      <Input label={detail.q} value={detail.a || ''} onChange={(e) => onChange(e.target.value)} />
+    )
+  }
+
+  return (
+    <Textarea
+      label={detail.q}
+      rows={2}
+      value={detail.a || ''}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  )
+}
 
 export function LeadSplitView({
   title = 'Leads',
@@ -49,7 +159,13 @@ export function LeadSplitView({
       phone: lead.phone === '—' ? '' : lead.phone || '',
       postcode: lead.postcodeRaw || '',
       status: lead.status || 'OPEN',
-      summary: lead.summary || '',
+      details: (lead.details || []).map((d) => ({
+        questionId: d.questionId || null,
+        q: d.q || 'Question',
+        a: d.a === '—' ? '' : d.a || '',
+        type: d.type || 'TEXTAREA',
+        options: d.options || [],
+      })),
     })
     setEditError('')
   }
@@ -60,6 +176,15 @@ export function LeadSplitView({
     setSaving(true)
     setEditError('')
     try {
+      const details = form.details || []
+      const answers = details
+        .filter((d) => d.questionId)
+        .map((d) => ({ questionId: d.questionId, value: d.a }))
+      const summary = details
+        .map((d) => String(d.a || '').trim())
+        .filter(Boolean)
+        .join(' / ')
+
       await onEdit(editing.id, {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
@@ -67,7 +192,8 @@ export function LeadSplitView({
         phone: form.phone.trim(),
         postcode: form.postcode.trim(),
         status: form.status,
-        summary: form.summary.trim(),
+        summary,
+        ...(answers.length ? { answers } : {}),
       })
       setEditing(null)
     } catch (err) {
@@ -75,6 +201,13 @@ export function LeadSplitView({
     } finally {
       setSaving(false)
     }
+  }
+
+  function updateDetail(index, value) {
+    setForm((f) => ({
+      ...f,
+      details: (f.details || []).map((d, i) => (i === index ? { ...d, a: value } : d)),
+    }))
   }
 
   return (
@@ -154,12 +287,14 @@ export function LeadSplitView({
                 </div>
 
                 <p className="mt-4 text-lg font-bold text-navy">{selected.service}</p>
-                <div className="mt-3 space-y-1.5 text-sm text-slate-600">
-                  <p className="inline-flex items-center gap-2">
-                    <Phone className="size-4 text-blue" strokeWidth={2} /> {selected.phone}
+                <div className="mt-3 flex flex-col gap-1.5 text-sm text-slate-600">
+                  <p className="flex items-center gap-2">
+                    <Phone className="size-4 shrink-0 text-blue" strokeWidth={2} />
+                    <span>{selected.phone}</span>
                   </p>
-                  <p className="inline-flex items-center gap-2">
-                    <Mail className="size-4 text-blue" strokeWidth={2} /> {selected.email}
+                  <p className="flex items-center gap-2">
+                    <Mail className="size-4 shrink-0 text-blue" strokeWidth={2} />
+                    <span>{selected.email}</span>
                   </p>
                 </div>
 
@@ -184,7 +319,7 @@ export function LeadSplitView({
         </div>
       </div>
 
-      <Modal open={!!editing} title="Edit lead" onClose={() => setEditing(null)}>
+      <Modal open={!!editing} title="Edit lead" onClose={() => setEditing(null)} wide>
         {editing ? (
           <form className="space-y-3" onSubmit={saveEdit}>
             {editError ? <p className="text-sm text-warn">{editError}</p> : null}
@@ -227,11 +362,24 @@ export function LeadSplitView({
                 </option>
               ))}
             </Select>
-            <Input
-              label="Summary"
-              value={form.summary}
-              onChange={(e) => setForm((f) => ({ ...f, summary: e.target.value }))}
-            />
+
+            <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+              <p className="text-sm font-semibold text-navy">Details / questions</p>
+              <p className="text-xs text-slate-500">
+                Edit each answer below. The lead summary is rebuilt from these answers.
+              </p>
+              {(form.details || []).map((d, index) => (
+                <LeadAnswerField
+                  key={d.questionId || `detail-${index}`}
+                  detail={d}
+                  onChange={(value) => updateDetail(index, value)}
+                />
+              ))}
+              {!(form.details || []).length ? (
+                <p className="text-xs text-slate-500">No questionnaire answers on this lead.</p>
+              ) : null}
+            </div>
+
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="secondary" onClick={() => setEditing(null)}>
                 Cancel

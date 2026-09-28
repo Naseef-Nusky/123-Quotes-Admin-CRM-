@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { api } from '../api/client.js'
 import { mapAdminProfessional } from '../lib/mappers.js'
+import BusinessAddWizard from '../components/BusinessAddWizard.jsx'
 import { DataTable } from '../components/AdminViews.jsx'
 import {
   Button,
@@ -44,10 +45,7 @@ export default function Professionals() {
     setLoading(true)
     setError('')
     try {
-      const [data, svc] = await Promise.all([
-        api.getUsers({ role: 'PROFESSIONAL' }),
-        api.getServices().catch(() => ({ services: [] })),
-      ])
+      const data = await api.getUsers({ role: 'PROFESSIONAL', lite: '1' })
       const users = data.users || []
       setRawUsers(users)
       setRows(
@@ -55,7 +53,6 @@ export default function Professionals() {
           .filter((u) => u.status === 'ACTIVE' || u.status === 'SUSPENDED' || u.status === 'INACTIVE')
           .map(mapAdminProfessional),
       )
-      setServices(svc.services || [])
     } catch (err) {
       setError(err.message || 'Failed to load professionals')
       setRows([])
@@ -71,7 +68,6 @@ export default function Professionals() {
   function openAdd() {
     setMode('add')
     setActive(null)
-    setForm({ ...emptyForm })
     setError('')
   }
 
@@ -91,6 +87,9 @@ export default function Professionals() {
       password: '',
     })
     setError('')
+    if (!services.length) {
+      api.getServices().then((d) => setServices(d.services || [])).catch(() => {})
+    }
   }
 
   function openView(pro) {
@@ -104,47 +103,34 @@ export default function Professionals() {
     setActive(null)
   }
 
+  async function onCreated() {
+    setFlash('Business created.')
+    setTimeout(() => setFlash(''), 2200)
+    await load()
+  }
+
   async function saveForm(e) {
     e.preventDefault()
     if (!form.name.trim() || !form.email.trim() || !form.company.trim()) {
       setError('Name, email and company are required.')
       return
     }
-    if (mode === 'add' && !form.password.trim()) {
-      setError('Password is required for new businesses.')
-      return
-    }
 
     setSaving(true)
     setError('')
     try {
-      if (mode === 'add') {
-        await api.createProfessional({
-          contactName: form.name.trim(),
-          email: form.email.trim(),
-          password: form.password.trim(),
-          phone: form.phone.trim(),
-          companyName: form.company.trim(),
-          bio: form.details.trim() || null,
-          type: form.type.trim(),
-          postcode: form.postcode.trim() || null,
-          status: form.status,
-        })
-        setFlash('Business created.')
-      } else {
-        const body = {
-          contactName: form.name.trim(),
-          email: form.email.trim(),
-          phone: form.phone.trim(),
-          companyName: form.company.trim(),
-          bio: form.details.trim() || 'No Additional Details',
-          type: form.type.trim(),
-          status: form.status,
-        }
-        if (form.password.trim()) body.password = form.password.trim()
-        await api.updateProfessional(active.id, body)
-        setFlash('Business updated.')
+      const body = {
+        contactName: form.name.trim(),
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        companyName: form.company.trim(),
+        bio: form.details.trim() || 'No Additional Details',
+        type: form.type.trim(),
+        status: form.status,
       }
+      if (form.password.trim()) body.password = form.password.trim()
+      await api.updateProfessional(active.id, body)
+      setFlash('Business updated.')
       closeModal()
       setTimeout(() => setFlash(''), 2200)
       await load()
@@ -216,7 +202,7 @@ export default function Professionals() {
       />
 
       {flash ? <p className="mb-3 text-sm font-semibold text-ok">{flash}</p> : null}
-      <ErrorBanner message={error} />
+      <ErrorBanner message={error && mode !== 'edit' ? error : ''} />
       {loading ? <p className="mb-3 text-sm text-slate-500">Loading professionals…</p> : null}
       <DataTable
         title="Professional"
@@ -225,13 +211,18 @@ export default function Professionals() {
         searchKeys={['name', 'email', 'phone', 'type', 'company']}
       />
 
-      <Modal
-        open={mode === 'add' || mode === 'edit'}
-        title={mode === 'add' ? 'Add business' : 'Edit business'}
+      <BusinessAddWizard
+        open={mode === 'add'}
         onClose={closeModal}
-      >
-        {mode === 'add' || mode === 'edit' ? (
+        onCreated={onCreated}
+        defaultStatus="ACTIVE"
+        title="Add business"
+      />
+
+      <Modal open={mode === 'edit'} title="Edit business" onClose={closeModal}>
+        {mode === 'edit' ? (
           <form className="space-y-3" onSubmit={saveForm}>
+            {error ? <p className="text-sm text-warn">{error}</p> : null}
             <Input
               label="Contact name"
               value={form.name}
@@ -291,19 +282,18 @@ export default function Professionals() {
               onChange={(e) => setForm((f) => ({ ...f, details: e.target.value }))}
             />
             <Input
-              label={mode === 'add' ? 'Password' : 'New password (optional)'}
+              label="New password (optional)"
               type="password"
               value={form.password}
               onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
-              required={mode === 'add'}
-              placeholder={mode === 'edit' ? 'Leave blank to keep current' : ''}
+              placeholder="Leave blank to keep current"
             />
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="secondary" onClick={closeModal}>
                 Cancel
               </Button>
               <Button type="submit" disabled={saving}>
-                {saving ? 'Saving…' : mode === 'add' ? 'Create business' : 'Save changes'}
+                {saving ? 'Saving…' : 'Save changes'}
               </Button>
             </div>
           </form>
@@ -331,6 +321,17 @@ export default function Professionals() {
             <p>
               <span className="font-semibold text-navy">Postcode:</span>{' '}
               {rawActive?.professional?.postcode || '—'}
+            </p>
+            <p>
+              <span className="font-semibold text-navy">Website:</span>{' '}
+              {rawActive?.professional?.website || '—'}
+            </p>
+            <p>
+              <span className="font-semibold text-navy">Coverage:</span>{' '}
+              {rawActive?.professional?.serviceAreas?.[0]?.label ||
+                (rawActive?.professional?.serviceAreas?.[0]
+                  ? `${rawActive.professional.serviceAreas[0].radiusMiles || '—'} mi from ${rawActive.professional.serviceAreas[0].postcode}`
+                  : '—')}
             </p>
             <p className="flex items-center gap-2">
               <span className="font-semibold text-navy">Status:</span>

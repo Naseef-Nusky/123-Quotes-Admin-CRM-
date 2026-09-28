@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { DataTable } from '../components/AdminViews.jsx'
+import { DataTable, LeadAnswerField } from '../components/AdminViews.jsx'
 import { Button, ErrorBanner, Input, Modal, Select } from '../components/ui.jsx'
 import { useAdminLeads } from '../hooks/useAdminLeads.js'
 
@@ -21,9 +21,22 @@ export default function Leads() {
       phone: row.phone === '—' ? '' : row.phone || '',
       postcode: row.postcodeRaw || '',
       status: row.status || 'OPEN',
-      summary: row.summary || '',
+      details: (row.details || []).map((d) => ({
+        questionId: d.questionId || null,
+        q: d.q || 'Question',
+        a: d.a === '—' ? '' : d.a || '',
+        type: d.type || 'TEXTAREA',
+        options: d.options || [],
+      })),
     })
     setFormError('')
+  }
+
+  function updateDetail(index, value) {
+    setForm((f) => ({
+      ...f,
+      details: (f.details || []).map((d, i) => (i === index ? { ...d, a: value } : d)),
+    }))
   }
 
   async function saveEdit(e) {
@@ -31,6 +44,15 @@ export default function Leads() {
     setSaving(true)
     setFormError('')
     try {
+      const details = form.details || []
+      const answers = details
+        .filter((d) => d.questionId)
+        .map((d) => ({ questionId: d.questionId, value: d.a }))
+      const summary = details
+        .map((d) => String(d.a || '').trim())
+        .filter(Boolean)
+        .join(' / ')
+
       await updateLead(editing.id, {
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
@@ -38,7 +60,8 @@ export default function Leads() {
         phone: form.phone.trim(),
         postcode: form.postcode.trim(),
         status: form.status,
-        summary: form.summary.trim(),
+        summary,
+        ...(answers.length ? { answers } : {}),
       })
       setEditing(null)
     } catch (err) {
@@ -92,7 +115,7 @@ export default function Leads() {
         searchKeys={['name', 'email', 'phone', 'service']}
       />
 
-      <Modal open={!!editing} title="Edit lead" onClose={() => setEditing(null)}>
+      <Modal open={!!editing} title="Edit lead" onClose={() => setEditing(null)} wide>
         {editing ? (
           <form className="space-y-3" onSubmit={saveEdit}>
             {formError ? <p className="text-sm text-warn">{formError}</p> : null}
@@ -135,11 +158,24 @@ export default function Leads() {
                 </option>
               ))}
             </Select>
-            <Input
-              label="Summary"
-              value={form.summary}
-              onChange={(e) => setForm((f) => ({ ...f, summary: e.target.value }))}
-            />
+
+            <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+              <p className="text-sm font-semibold text-navy">Details / questions</p>
+              <p className="text-xs text-slate-500">
+                Edit each answer below. The lead summary is rebuilt from these answers.
+              </p>
+              {(form.details || []).map((d, index) => (
+                <LeadAnswerField
+                  key={d.questionId || `detail-${index}`}
+                  detail={d}
+                  onChange={(value) => updateDetail(index, value)}
+                />
+              ))}
+              {!(form.details || []).length ? (
+                <p className="text-xs text-slate-500">No questionnaire answers on this lead.</p>
+              ) : null}
+            </div>
+
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="secondary" onClick={() => setEditing(null)}>
                 Cancel

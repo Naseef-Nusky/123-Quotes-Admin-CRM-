@@ -39,8 +39,16 @@ export function mapAdminLead(lead, leadViewLocked = false) {
     : 'Lead'
   const answers = lead.request?.answers || []
   const details = answers.map((a) => ({
+    questionId: a.questionId || a.question?.id,
+    answerId: a.id,
     q: a.question?.label || 'Question',
     a: a.value || '',
+    type: a.question?.type || 'TEXT',
+    options: (a.question?.options || []).map((o) => ({
+      id: o.id,
+      label: o.label,
+      value: o.value,
+    })),
   }))
   const snippet =
     lead.summary ||
@@ -70,7 +78,9 @@ export function mapAdminLead(lead, leadViewLocked = false) {
     date: formatDateTime(lead.createdAt),
     status: lead.status,
     summary: lead.summary || '',
-    details: details.length ? details : [{ q: 'Summary', a: lead.summary || '—' }],
+    details: details.length
+      ? details
+      : [{ questionId: null, answerId: null, q: 'Summary', a: lead.summary || '', type: 'TEXTAREA', options: [] }],
   }
 }
 
@@ -101,5 +111,26 @@ export function mapPendingRegistration(user) {
     name: pro?.companyName || pro?.contactName || '—',
     contact: pro?.phone || '—',
     email: user.email || '—',
+  }
+}
+
+export function mapBusinessApplication(app) {
+  return {
+    id: app.id,
+    name: app.companyName || app.contactName || '—',
+    contactName: app.contactName || '—',
+    contact: app.phone || '—',
+    email: app.email || '—',
+    service: app.service?.name || app.serviceName || '—',
+    coverage: app.nationwide
+      ? 'Nationwide'
+      : app.postcode
+        ? `${app.radiusMiles || 50} mi from ${app.postcode}`
+        : '—',
+    isAdditional: Boolean(app.isAdditional),
+    website: app.website || '—',
+    status: app.status,
+    createdAt: app.createdAt,
+    raw: app,
   }
 }

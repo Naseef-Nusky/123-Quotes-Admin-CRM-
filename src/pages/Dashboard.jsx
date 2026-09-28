@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Lock, Unlock } from 'lucide-react'
 import { api } from '../api/client.js'
 import { Button, Card, ErrorBanner } from '../components/ui.jsx'
@@ -11,12 +12,12 @@ export default function Dashboard() {
 
   useEffect(() => {
     let cancelled = false
-    Promise.all([api.getDashboard(), api.getSettings()])
-      .then(([dash, settings]) => {
+    api
+      .getDashboard()
+      .then((dash) => {
         if (cancelled) return
         setStats(dash.stats || null)
-        const row = (settings.settings || []).find((s) => s.key === 'lead_view_locked')
-        setLocked(Boolean(row?.value))
+        setLocked(Boolean(dash.leadViewLocked))
       })
       .catch((err) => {
         if (!cancelled) setError(err.message || 'Failed to load dashboard')
@@ -72,15 +73,17 @@ export default function Dashboard() {
       {stats ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            { label: 'Customers', value: stats.customers },
-            { label: 'Professionals', value: stats.professionals },
-            { label: 'Requests', value: stats.requests },
-            { label: 'Unlocks', value: stats.unlocks },
+            { label: 'Customers', value: stats.customers, to: '/customers' },
+            { label: 'Professionals', value: stats.professionals, to: '/professionals' },
+            { label: 'Requests', value: stats.requests, to: '/leads' },
+            { label: 'Unlocks', value: stats.unlocks, to: '/locked-leads' },
           ].map((s) => (
-            <Card key={s.label} className="p-4">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{s.label}</p>
-              <p className="mt-2 text-2xl font-bold text-navy">{s.value}</p>
-            </Card>
+            <Link key={s.label} to={s.to} className="block transition hover:-translate-y-0.5">
+              <Card className="h-full p-4 hover:border-blue/40 hover:shadow-md">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{s.label}</p>
+                <p className="mt-2 text-2xl font-bold text-navy">{s.value}</p>
+              </Card>
+            </Link>
           ))}
         </div>
       ) : null}

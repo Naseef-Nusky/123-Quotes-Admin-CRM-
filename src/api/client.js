@@ -1,25 +1,45 @@
 const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
+/** Deduplicate concurrent identical GETs (React StrictMode remounts, parallel pages). */
+const inflightGets = new Map()
+
 function getToken() {
   return localStorage.getItem('token')
 }
 
 async function request(path, options = {}) {
-  const token = getToken()
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  })
-
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) {
-    throw new Error(data.message || 'Request failed')
+  const method = String(options.method || 'GET').toUpperCase()
+  const isGet = method === 'GET'
+  if (isGet && inflightGets.has(path)) {
+    return inflightGets.get(path)
   }
-  return data
+
+  const run = (async () => {
+    const token = getToken()
+    const res = await fetch(`${API_BASE}${path}`, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
+      },
+    })
+
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      throw new Error(data.message || 'Request failed')
+    }
+    return data
+  })()
+
+  if (isGet) {
+    inflightGets.set(path, run)
+    run.finally(() => {
+      if (inflightGets.get(path) === run) inflightGets.delete(path)
+    })
+  }
+
+  return run
 }
 
 export const api = {
@@ -27,6 +47,27 @@ export const api = {
   me: () => request('/auth/me'),
 
   getDashboard: () => request('/admin/dashboard'),
+
+  getBusinessApplications: (params = {}) => {
+    const q = new URLSearchParams(params).toString()
+    return request(`/admin/business-applications${q ? `?${q}` : ''}`)
+  },
+  approveBusinessApplication: (id) =>
+    request(`/admin/business-applications/${id}/approve`, { method: 'POST' }),
+  declineBusinessApplication: (id, body = {}) =>
+    request(`/admin/business-applications/${id}/decline`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+
+  getNotifications: (params = {}) => {
+    const q = new URLSearchParams(params).toString()
+    return request(`/admin/notifications${q ? `?${q}` : ''}`)
+  },
+  markNotificationRead: (id) =>
+    request(`/admin/notifications/${id}/read`, { method: 'PATCH' }),
+  markAllNotificationsRead: () =>
+    request('/admin/notifications/read-all', { method: 'PATCH' }),
 
   getUsers: (params = {}) => {
     const q = new URLSearchParams(params).toString()
@@ -71,6 +112,7 @@ export const api = {
   },
   getCategories: () => request('/services/categories'),
   manageServices: () => request('/services/manage/all'),
+  manageCategories: () => request('/services/manage/categories'),
   createService: (body) =>
     request('/services/manage', { method: 'POST', body: JSON.stringify(body) }),
   updateService: (id, body) =>
@@ -90,4 +132,8 @@ export const api = {
   updateQuestion: (id, body) =>
     request(`/questions/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteQuestion: (id) => request(`/questions/${id}`, { method: 'DELETE' }),
+
+  listPostcodes: () => request('/postcodes/list'),
+  suggestPostcodes: (q, limit = 40) =>
+    request(`/postcodes/suggest?q=${encodeURIComponent(q)}&limit=${limit}`),
 }

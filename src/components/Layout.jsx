@@ -16,8 +16,12 @@ import {
   Shield,
   ClipboardCheck,
   TriangleAlert,
+  Folders,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
+import NotificationBell from './NotificationBell.jsx'
 
 const navGroups = [
   {
@@ -43,6 +47,7 @@ const navGroups = [
     items: [
       { to: '/recent-pros', label: 'Recent Pro.', icon: UserRound },
       { to: '/professionals', label: 'Professional', icon: UsersRound },
+      { to: '/categories', label: 'Categories', icon: Folders },
       { to: '/pro-mgmt', label: 'Pro.Mgmt', icon: Settings2 },
     ],
   },
@@ -156,7 +161,7 @@ export default function Layout({ children }) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-4 py-3 backdrop-blur lg:px-6">
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             <button
               type="button"
               className="inline-flex items-center justify-center rounded-lg border border-slate-200 p-2 text-navy lg:hidden"
@@ -165,11 +170,34 @@ export default function Layout({ children }) {
             >
               {mobileOpen ? <X className="size-5" /> : <Menu className="size-5" />}
             </button>
-            <div>
+
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => navigate(-1)}
+                className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-navy transition hover:border-blue hover:text-blue"
+                aria-label="Go back"
+                title="Back"
+              >
+                <ChevronLeft className="size-5" strokeWidth={2} />
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(1)}
+                className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-navy transition hover:border-blue hover:text-blue"
+                aria-label="Go forward"
+                title="Forward"
+              >
+                <ChevronRight className="size-5" strokeWidth={2} />
+              </button>
+            </div>
+
+            <div className="min-w-0">
               <p className="text-sm font-semibold text-navy">Admin Console</p>
-              <p className="text-xs text-slate-500">Manage leads, pros & platform settings</p>
+              <p className="truncate text-xs text-slate-500">Manage leads, pros & platform settings</p>
             </div>
           </div>
+          <NotificationBell />
         </header>
 
         <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>

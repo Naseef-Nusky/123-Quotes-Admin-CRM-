@@ -34,7 +34,15 @@ function mapServices(list) {
     categoryId: s.categoryId || s.category?.id,
     name: s.name,
     description: s.shortDesc || s.description || '',
-    questions: (s.questions || []).map((q) => ({
+    questionCount: s._count?.questions ?? (s.questions || []).length,
+    questions: null, // loaded on demand
+  }))
+}
+
+function mapQuestions(list) {
+  return (list || [])
+    .filter((q) => q.isActive !== false)
+    .map((q) => ({
       id: q.id,
       text: q.label || q.text || 'Question',
       type: apiTypeToUi(q.type),
@@ -42,8 +50,7 @@ function mapServices(list) {
         label: o.label || o.value || '',
         nextQuestion: 'End',
       })),
-    })),
-  }))
+    }))
 }
 
 function emptyAnswer() {
@@ -54,6 +61,7 @@ export default function ProMgmt() {
   const [services, setServices] = useState([])
   const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
+  const [questionsLoading, setQuestionsLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [q, setQ] = useState('')
   const [selectedId, setSelectedId] = useState(null)
@@ -93,18 +101,45 @@ export default function ProMgmt() {
     }
   }, [])
 
+  const loadQuestions = useCallback(async (serviceId) => {
+    if (!serviceId) return
+    setQuestionsLoading(true)
+    try {
+      const data = await api.getQuestions(serviceId)
+      const mapped = mapQuestions(data.questions || [])
+      setServices((prev) =>
+        prev.map((s) =>
+          s.id === serviceId
+            ? { ...s, questions: mapped, questionCount: mapped.length }
+            : s,
+        ),
+      )
+    } catch (err) {
+      setError(err.message || 'Failed to load questions')
+      setServices((prev) =>
+        prev.map((s) => (s.id === serviceId ? { ...s, questions: [] } : s)),
+      )
+    } finally {
+      setQuestionsLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
     load()
   }, [load])
 
+  useEffect(() => {
+    if (!selectedId) return
+    const current = services.find((s) => s.id === selectedId)
+    if (current && current.questions == null) {
+      loadQuestions(selectedId)
+    }
+  }, [selectedId, services, loadQuestions])
+
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase()
     if (!term) return services
-    return services.filter(
-      (s) =>
-        s.name.toLowerCase().includes(term) ||
-        (s.questions || []).some((qq) => String(qq.text || '').toLowerCase().includes(term)),
-    )
+    return services.filter((s) => s.name.toLowerCase().includes(term))
   }, [services, q])
 
   const selected = services.find((s) => s.id === selectedId) || filtered[0] || null
@@ -252,7 +287,7 @@ export default function ProMgmt() {
         flashMsg('Question updated.')
       }
       setQModal(null)
-      await load()
+      await loadQuestions(qModal.serviceId)
     } catch (err) {
       setError(err.message || 'Save failed')
     } finally {
@@ -266,7 +301,7 @@ export default function ProMgmt() {
     try {
       await api.deleteQuestion(question.id)
       flashMsg('Question deleted.')
-      await load()
+      if (selectedId) await loadQuestions(selectedId)
     } catch (err) {
       setError(err.message || 'Delete failed')
     } finally {
@@ -330,7 +365,7 @@ export default function ProMgmt() {
                 <span>
                   <span className="block text-sm font-semibold text-navy">{service.name}</span>
                   <span className="text-xs text-slate-500">
-                    {(service.questions || []).length} question(s)
+                    {service.questionCount ?? (service.questions || []).length} question(s)
                   </span>
                 </span>
               </button>
@@ -366,6 +401,9 @@ export default function ProMgmt() {
               </div>
 
               <div className="space-y-3 p-5">
+                {questionsLoading && selected.questions == null ? (
+                  <p className="text-sm text-slate-500">Loading questions…</p>
+                ) : null}
                 {(selected.questions || []).map((question) => (
                   <div
                     key={question.id}
@@ -405,7 +443,7 @@ export default function ProMgmt() {
                     </div>
                   </div>
                 ))}
-                {!(selected.questions || []).length ? (
+                {!questionsLoading && selected.questions && !selected.questions.length ? (
                   <p className="text-sm text-slate-500">No questions yet for this service.</p>
                 ) : null}
               </div>
