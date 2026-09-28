@@ -77,7 +77,8 @@ export function LeadAnswerField({ detail, onChange }) {
         <legend className="text-sm font-semibold text-navy">{detail.q}</legend>
         <div className="space-y-2">
           {options.map((opt) => {
-            const checked = selected.includes(opt.value)
+            const checked =
+              selected.includes(opt.value) || (opt.label && selected.includes(opt.label))
             return (
               <label
                 key={opt.id || opt.value}
@@ -90,9 +91,10 @@ export function LeadAnswerField({ detail, onChange }) {
                   className="size-4 accent-blue"
                   checked={checked}
                   onChange={() => {
+                    const token = opt.value
                     const next = checked
-                      ? selected.filter((v) => v !== opt.value)
-                      : [...selected, opt.value]
+                      ? selected.filter((v) => v !== opt.value && v !== opt.label)
+                      : [...selected.filter((v) => v !== opt.value && v !== opt.label), token]
                     onChange(next.join(', '))
                   }}
                 />

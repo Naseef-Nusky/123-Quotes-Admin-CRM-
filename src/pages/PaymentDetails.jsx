@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../api/client.js'
 import { DataTable } from '../components/AdminViews.jsx'
-import { Button, ErrorBanner, StatusBadge, formatDate, formatMoney } from '../components/ui.jsx'
+import { Button, ErrorBanner, Modal, StatusBadge, formatDate, formatMoney } from '../components/ui.jsx'
 
 function displayName(user) {
   if (!user) return '—'
@@ -27,75 +27,36 @@ function mapApiPayment(p) {
     package: p.package?.name || (p.subscriptionId ? 'Subscription' : 'Payment'),
     tokens: tokens ?? '—',
     amount: formatMoney(p.amountCents, p.currency || 'GBP'),
+    amountRaw: p.amountCents,
+    currency: p.currency || 'GBP',
     method: 'Square',
     status: p.status,
     date: formatDate(p.createdAt),
+    createdAt: p.createdAt,
     reference: p.providerPaymentId || p.id.slice(0, 8),
+    providerPaymentId: p.providerPaymentId || '—',
+    subscriptionId: p.subscriptionId || null,
+    packageName: p.package?.name || null,
+    userRole: p.user?.role || '—',
   }
 }
 
-const CONFIG = {
-  recent: {
-    title: 'Square Payments',
-    apiType: 'square',
-    searchKeys: ['name', 'email', 'phone', 'package', 'reference', 'status'],
-    columns: [
-      { key: '#', label: '#', render: (_row, idx) => idx + 1 },
-      { key: 'name', label: 'Name' },
-      { key: 'email', label: 'Email' },
-      { key: 'phone', label: 'Contact No' },
-      { key: 'package', label: 'Details' },
-      { key: 'amount', label: 'Amount' },
-      { key: 'method', label: 'Method' },
-      { key: 'status', label: 'Status', render: (r) => <StatusBadge status={r.status} /> },
-      { key: 'date', label: 'Date' },
-      { key: 'reference', label: 'Reference' },
-      {
-        key: 'action',
-        label: 'Action',
-        render: () => <Button variant="secondary">View</Button>,
-      },
-    ],
-  },
-  purchases: {
-    title: 'Recent purchases',
-    apiType: 'purchases',
-    searchKeys: ['name', 'email', 'phone', 'package', 'status'],
-    columns: [
-      { key: '#', label: '#', render: (_row, idx) => idx + 1 },
-      { key: 'name', label: 'Name' },
-      { key: 'email', label: 'Email' },
-      { key: 'phone', label: 'Contact No' },
-      { key: 'package', label: 'Package' },
-      { key: 'tokens', label: 'Tokens' },
-      { key: 'amount', label: 'Amount' },
-      { key: 'method', label: 'Method' },
-      { key: 'status', label: 'Status', render: (r) => <StatusBadge status={r.status} /> },
-      { key: 'date', label: 'Date' },
-      {
-        key: 'action',
-        label: 'Action',
-        render: () => <Button variant="secondary">View</Button>,
-      },
-    ],
-  },
-}
-
 export default function PaymentDetails({ variant = 'recent' }) {
-  const config = CONFIG[variant] || CONFIG.recent
+  const isPurchases = variant === 'purchases'
   const [rows, setRows] = useState([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [active, setActive] = useState(null)
 
   useEffect(() => {
     let cancelled = false
-    const current = CONFIG[variant] || CONFIG.recent
     setLoading(true)
     setError('')
     setRows([])
+    setActive(null)
 
     api
-      .getPayments({ type: current.apiType })
+      .getPayments({ type: isPurchases ? 'purchases' : 'square' })
       .then((data) => {
         if (cancelled) return
         setRows((data.payments || []).map(mapApiPayment))
@@ -110,26 +71,114 @@ export default function PaymentDetails({ variant = 'recent' }) {
     return () => {
       cancelled = true
     }
-  }, [variant])
+  }, [isPurchases])
 
-  const subtitle = useMemo(
-    () =>
-      loading
-        ? 'Loading Square payment records…'
-        : 'Square is the only payment method on this platform.',
-    [loading],
+  const columns = useMemo(
+    () => [
+      { key: '#', label: '#', render: (_row, idx) => idx + 1 },
+      { key: 'name', label: 'Name' },
+      { key: 'email', label: 'Email' },
+      { key: 'phone', label: 'Contact No' },
+      { key: 'package', label: isPurchases ? 'Package' : 'Details' },
+      ...(isPurchases ? [{ key: 'tokens', label: 'Tokens' }] : []),
+      { key: 'amount', label: 'Amount' },
+      { key: 'method', label: 'Method' },
+      { key: 'status', label: 'Status', render: (r) => <StatusBadge status={r.status} /> },
+      { key: 'date', label: 'Date' },
+      ...(!isPurchases ? [{ key: 'reference', label: 'Reference' }] : []),
+      {
+        key: 'action',
+        label: 'Action',
+        render: (row) => (
+          <Button variant="secondary" onClick={() => setActive(row)}>
+            View
+          </Button>
+        ),
+      },
+    ],
+    [isPurchases],
   )
+
+  const searchKeys = isPurchases
+    ? ['name', 'email', 'phone', 'package', 'status']
+    : ['name', 'email', 'phone', 'package', 'reference', 'status']
+
+  const subtitle = loading
+    ? 'Loading Square payment records…'
+    : 'Square is the only payment method on this platform.'
 
   return (
     <div>
       <ErrorBanner message={error} />
       <p className="mb-2 text-sm text-slate-500">{subtitle}</p>
       <DataTable
-        title={config.title}
-        columns={config.columns}
+        title={isPurchases ? 'Recent purchases' : 'Square Payments'}
+        columns={columns}
         rows={rows}
-        searchKeys={config.searchKeys}
+        searchKeys={searchKeys}
       />
+
+      <Modal open={!!active} title="Payment details" onClose={() => setActive(null)}>
+        {active ? (
+          <div className="space-y-3 text-sm">
+            <p>
+              <span className="font-semibold text-navy">Name:</span> {active.name}
+            </p>
+            <p>
+              <span className="font-semibold text-navy">Email:</span> {active.email}
+            </p>
+            <p>
+              <span className="font-semibold text-navy">Phone:</span> {active.phone}
+            </p>
+            <p>
+              <span className="font-semibold text-navy">Role:</span> {active.userRole}
+            </p>
+            <p>
+              <span className="font-semibold text-navy">
+                {isPurchases ? 'Package' : 'Details'}:
+              </span>{' '}
+              {active.package}
+            </p>
+            {active.tokens !== '—' ? (
+              <p>
+                <span className="font-semibold text-navy">Tokens:</span> {active.tokens}
+              </p>
+            ) : null}
+            <p>
+              <span className="font-semibold text-navy">Amount:</span> {active.amount}
+            </p>
+            <p>
+              <span className="font-semibold text-navy">Method:</span> {active.method}
+            </p>
+            <p className="flex items-center gap-2">
+              <span className="font-semibold text-navy">Status:</span>
+              <StatusBadge status={active.status} />
+            </p>
+            <p>
+              <span className="font-semibold text-navy">Date:</span> {active.date}
+            </p>
+            <p>
+              <span className="font-semibold text-navy">Reference:</span> {active.reference}
+            </p>
+            <p>
+              <span className="font-semibold text-navy">Provider ID:</span>{' '}
+              {active.providerPaymentId}
+            </p>
+            {active.subscriptionId ? (
+              <p>
+                <span className="font-semibold text-navy">Subscription:</span>{' '}
+                {active.subscriptionId}
+              </p>
+            ) : null}
+            <p>
+              <span className="font-semibold text-navy">Payment ID:</span> {active.id}
+            </p>
+            <div className="flex justify-end pt-2">
+              <Button onClick={() => setActive(null)}>Close</Button>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
     </div>
   )
 }

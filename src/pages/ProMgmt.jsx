@@ -266,6 +266,11 @@ export default function ProMgmt() {
       .filter((a) => a.label)
 
     const type = uiTypeToApi(qModal.childType)
+    if (type !== 'TEXT' && !answers.length) {
+      setError('Add at least one answer option for this question type.')
+      return
+    }
+
     setSaving(true)
     setError('')
     try {
