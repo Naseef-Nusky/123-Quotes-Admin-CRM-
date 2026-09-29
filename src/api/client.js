@@ -103,6 +103,12 @@ export const api = {
     return request(`/admin/payments${q ? `?${q}` : ''}`)
   },
 
+  getPackages: () => request('/admin/packages'),
+  createPackage: (body) =>
+    request('/admin/packages', { method: 'POST', body: JSON.stringify(body) }),
+  updatePackage: (id, body) =>
+    request(`/admin/packages/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+
   getSettings: () => request('/admin/settings'),
   upsertSetting: (body) => request('/admin/settings', { method: 'POST', body: JSON.stringify(body) }),
 

@@ -17,6 +17,7 @@ import {
   ClipboardCheck,
   TriangleAlert,
   Folders,
+  Coins,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
@@ -56,6 +57,7 @@ const navGroups = [
     items: [
       { to: '/recent-payment', label: 'Square Payments', icon: CreditCard },
       { to: '/recent-purchases', label: 'Recent purchases', icon: ShoppingBag },
+      { to: '/token-packages', label: 'Token packages', icon: Coins },
     ],
   },
 ]

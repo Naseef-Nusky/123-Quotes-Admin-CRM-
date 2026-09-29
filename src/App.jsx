@@ -11,6 +11,7 @@ import Professionals from './pages/Professionals.jsx'
 import ProMgmt from './pages/ProMgmt.jsx'
 import Categories from './pages/Categories.jsx'
 import PaymentDetails from './pages/PaymentDetails.jsx'
+import TokenPackages from './pages/TokenPackages.jsx'
 import SystemUsers from './pages/SystemUsers.jsx'
 import BusinessRegistration from './pages/BusinessRegistration.jsx'
 import Customers from './pages/Customers.jsx'
@@ -60,6 +61,7 @@ export default function App() {
                 <Route path="/recent-payment-online" element={<Navigate to="/recent-payment" replace />} />
                 <Route path="/recent-payment" element={<PaymentDetails variant="recent" />} />
                 <Route path="/recent-purchases" element={<PaymentDetails variant="purchases" />} />
+                <Route path="/token-packages" element={<TokenPackages />} />
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Routes>
             </Layout>
