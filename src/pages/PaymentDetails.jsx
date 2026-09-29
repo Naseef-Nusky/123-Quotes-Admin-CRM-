@@ -19,6 +19,7 @@ function displayPhone(user) {
 
 function mapApiPayment(p) {
   const tokens = p.meta?.tokens ?? p.package?.tokens
+  const mocked = Boolean(p.meta?.mocked)
   return {
     id: p.id,
     name: displayName(p.user),
@@ -29,7 +30,8 @@ function mapApiPayment(p) {
     amount: formatMoney(p.amountCents, p.currency || 'GBP'),
     amountRaw: p.amountCents,
     currency: p.currency || 'GBP',
-    method: 'Square',
+    method: mocked ? 'Square (test/mock)' : 'Square',
+    mocked,
     status: p.status,
     date: formatDate(p.createdAt),
     createdAt: p.createdAt,
@@ -105,7 +107,7 @@ export default function PaymentDetails({ variant = 'recent' }) {
 
   const subtitle = loading
     ? 'Loading Square payment records…'
-    : 'Square is the only payment method on this platform.'
+    : 'Mock purchases (PAYMENTS_ENABLED=false) appear here only — not in Square.com. Live sandbox charges need Square keys + PAYMENTS_ENABLED=true.'
 
   return (
     <div>
@@ -150,6 +152,12 @@ export default function PaymentDetails({ variant = 'recent' }) {
             <p>
               <span className="font-semibold text-navy">Method:</span> {active.method}
             </p>
+            {active.mocked ? (
+              <p className="rounded-md bg-amber-50 px-3 py-2 text-amber-800">
+                This was a <strong>mock/test</strong> purchase (no real Square charge). It will not
+                appear in the Square Developer Dashboard.
+              </p>
+            ) : null}
             <p className="flex items-center gap-2">
               <span className="font-semibold text-navy">Status:</span>
               <StatusBadge status={active.status} />
