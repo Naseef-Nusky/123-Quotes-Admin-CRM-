@@ -48,6 +48,13 @@ export default function Dashboard() {
         <div>
           <h1 className="text-3xl font-bold text-navy">Dashboard</h1>
           <p className="mt-1 text-sm text-slate-500">Lead lock controls and platform overview.</p>
+          <p className="mt-2 text-sm text-slate-500">
+            Unlock token pricing is on the{' '}
+            <Link to="/token-adjust" className="font-semibold text-blue hover:underline">
+              Default Token Adjust
+            </Link>{' '}
+            tab.
+          </p>
         </div>
         <Card className="p-4">
           <p className="text-sm font-semibold text-navy">Lock Lead View :</p>
@@ -64,8 +71,7 @@ export default function Dashboard() {
             Click to Lock / Unlock all outgoing leads to Service Providers.
           </p>
           <p className="mt-2 text-xs font-semibold text-blue">
-            Status: {locked ? 'LOCKED' : 'UNLOCKED'} · Open leads:{' '}
-            {stats?.leads ?? '—'}
+            Status: {locked ? 'LOCKED' : 'UNLOCKED'} · Open leads: {stats?.leads ?? '—'}
           </p>
         </Card>
       </div>

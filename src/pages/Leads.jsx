@@ -1,6 +1,11 @@
 import { useState } from 'react'
 import { DataTable, LeadAnswerField } from '../components/AdminViews.jsx'
 import PhoneInput from '../components/PhoneInput.jsx'
+import {
+  UnlockTokenTiersForm,
+  normalizeUnlockTiersForUi,
+  serializeUnlockTiers,
+} from '../components/UnlockTokenTiersForm.jsx'
 import { Button, ErrorBanner, Input, Modal, Select } from '../components/ui.jsx'
 import {
   DEFAULT_COUNTRY_CODE,
@@ -13,11 +18,16 @@ import { useAdminLeads } from '../hooks/useAdminLeads.js'
 const LEAD_STATUSES = ['OPEN', 'MATCHED', 'PARTIALLY_UNLOCKED', 'CLOSED', 'CANCELLED']
 
 export default function Leads() {
-  const { leads, loading, error, deleteLead, updateLead } = useAdminLeads()
+  const { leads, loading, error, deleteLead, updateLead, unlockTiers } = useAdminLeads()
   const [editing, setEditing] = useState(null)
+  const [tokenLead, setTokenLead] = useState(null)
+  const [tiers, setTiers] = useState([])
+  const [useIndividual, setUseIndividual] = useState(false)
   const [form, setForm] = useState({})
   const [saving, setSaving] = useState(false)
+  const [tokenSaving, setTokenSaving] = useState(false)
   const [formError, setFormError] = useState('')
+  const [tokenError, setTokenError] = useState('')
 
   function openEdit(row) {
     const parsed = parseIntlPhone(row.phone === '—' ? '' : row.phone || '')
@@ -39,6 +49,20 @@ export default function Leads() {
       })),
     })
     setFormError('')
+  }
+
+  function openTokens(row) {
+    const individual = Boolean(row.hasCustomUnlockTiers)
+    setTokenLead(row)
+    setUseIndividual(individual)
+    setTiers(
+      normalizeUnlockTiersForUi(
+        individual
+          ? row.customUnlockTiers || row.unlockTiers
+          : unlockTiers || row.unlockTiers,
+      ),
+    )
+    setTokenError('')
   }
 
   function updateDetail(index, value) {
@@ -82,12 +106,60 @@ export default function Leads() {
     }
   }
 
+  async function saveTokens(e) {
+    e.preventDefault()
+    if (!tokenLead) return
+    setTokenSaving(true)
+    setTokenError('')
+    try {
+      if (!useIndividual) {
+        await updateLead(tokenLead.id, { unlockTiers: null })
+      } else {
+        const cleaned = serializeUnlockTiers(tiers)
+        await updateLead(tokenLead.id, {
+          unlockTiers: cleaned,
+          tokenCost: cleaned[0]?.tokenCost || 1,
+        })
+      }
+      setTokenLead(null)
+    } catch (err) {
+      setTokenError(err.message || 'Failed to update tokens for this lead')
+    } finally {
+      setTokenSaving(false)
+    }
+  }
+
   const columns = [
     { key: '#', label: '#', render: (_row, idx) => idx + 1 },
     { key: 'name', label: 'Name' },
     { key: 'phone', label: 'Contact No' },
     { key: 'email', label: 'Email' },
     { key: 'service', label: 'Type' },
+    {
+      key: 'tokenCost',
+      label: 'Next tokens',
+      render: (row) => (
+        <span>
+          {row.tokenCost ?? 1}
+          <span className="ml-1 text-[10px] font-semibold uppercase text-slate-400">
+            {row.hasCustomUnlockTiers ? 'indiv' : 'default'}
+          </span>
+        </span>
+      ),
+    },
+    {
+      key: 'unlocks',
+      label: 'Unlocks',
+      render: (row) =>
+        row.maxUnlocks > 0
+          ? `${row.unlockedCount ?? 0}/${row.maxUnlocks}`
+          : String(row.unlockedCount ?? 0),
+    },
+    {
+      key: 'matched',
+      label: 'Matched',
+      render: (row) => row.matchedCount ?? 0,
+    },
     { key: 'date', label: 'Date' },
     {
       key: 'action',
@@ -96,6 +168,9 @@ export default function Leads() {
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" onClick={() => openEdit(row)}>
             Edit
+          </Button>
+          <Button variant="secondary" onClick={() => openTokens(row)}>
+            Tokens
           </Button>
           <Button
             variant="danger"
@@ -199,6 +274,75 @@ export default function Leads() {
               </Button>
               <Button type="submit" disabled={saving}>
                 {saving ? 'Saving…' : 'Save changes'}
+              </Button>
+            </div>
+          </form>
+        ) : null}
+      </Modal>
+
+      <Modal
+        open={!!tokenLead}
+        title={tokenLead ? `Tokens · ${tokenLead.name}` : 'Adjust tokens'}
+        onClose={() => setTokenLead(null)}
+        wide
+      >
+        {tokenLead ? (
+          <form className="space-y-3" onSubmit={saveTokens}>
+            {tokenError ? <p className="text-sm text-warn">{tokenError}</p> : null}
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+              <input
+                type="checkbox"
+                className="mt-1 size-4 accent-blue"
+                checked={useIndividual}
+                onChange={(e) => {
+                  const on = e.target.checked
+                  setUseIndividual(on)
+                  if (on) {
+                    setTiers(
+                      normalizeUnlockTiersForUi(
+                        tokenLead.customUnlockTiers || unlockTiers || tokenLead.unlockTiers,
+                      ),
+                    )
+                  }
+                }}
+              />
+              <span>
+                <span className="block text-sm font-semibold text-navy">
+                  Use individual token system for this lead
+                </span>
+                <span className="mt-0.5 block text-xs text-slate-500">
+                  Off = common Default Token Adjust for all leads. On = custom from/to options for
+                  this lead only.
+                </span>
+              </span>
+            </label>
+
+            {!useIndividual ? (
+              <p className="rounded-lg border border-blue/20 bg-blue/5 px-3 py-2 text-sm text-slate-600">
+                This lead uses the <strong>common</strong> token system from{' '}
+                <strong>Default Token Adjust</strong>.
+              </p>
+            ) : (
+              <>
+                <p className="text-xs text-slate-500">
+                  Current next unlock: {tokenLead.tokenCost ?? 1} token
+                  {(tokenLead.tokenCost ?? 1) === 1 ? '' : 's'} · {tokenLead.unlockedCount ?? 0}{' '}
+                  person view{(tokenLead.unlockedCount ?? 0) === 1 ? '' : 's'}
+                </p>
+                <UnlockTokenTiersForm tiers={tiers} onChange={setTiers} />
+              </>
+            )}
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="secondary" onClick={() => setTokenLead(null)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={tokenSaving}>
+                {tokenSaving
+                  ? 'Saving…'
+                  : useIndividual
+                    ? 'Save individual tokens'
+                    : 'Use common defaults'}
               </Button>
             </div>
           </form>

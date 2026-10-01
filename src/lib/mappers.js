@@ -29,7 +29,87 @@ function maskPostcode(pc) {
   return `${clean.slice(0, 3)}****`
 }
 
-export function mapAdminLead(lead, leadViewLocked = false) {
+function normalizeUnlockTiers(raw, fallbackCost = 1) {
+  let list = raw
+  if (typeof list === 'string') {
+    try {
+      list = JSON.parse(list)
+    } catch {
+      list = null
+    }
+  }
+  const fresh = Math.max(1, Math.floor(Number(fallbackCost) || 1))
+  if (!Array.isArray(list) || !list.length) {
+    return [{ fromViews: 0, toViews: null, tokenCost: fresh, afterViews: 0 }]
+  }
+
+  if (list.some((t) => t.afterViews != null && t.fromViews == null)) {
+    const points = list
+      .map((t) => ({
+        afterViews: Math.max(0, Math.floor(Number(t.afterViews) || 0)),
+        tokenCost: Math.max(1, Math.floor(Number(t.tokenCost) || 1)),
+      }))
+      .sort((a, b) => a.afterViews - b.afterViews)
+    const byView = new Map()
+    for (const t of points) byView.set(t.afterViews, t)
+    const sorted = [...byView.values()].sort((a, b) => a.afterViews - b.afterViews)
+    if (!sorted.some((t) => t.afterViews === 0)) sorted.unshift({ afterViews: 0, tokenCost: fresh })
+    return sorted.map((t, i) => {
+      const next = sorted[i + 1]
+      return {
+        fromViews: t.afterViews,
+        toViews: next ? next.afterViews - 1 : null,
+        tokenCost: t.tokenCost,
+        afterViews: t.afterViews,
+      }
+    })
+  }
+
+  const tiers = list
+    .map((t) => {
+      const fromViews = Math.max(0, Math.floor(Number(t.fromViews ?? t.afterViews) || 0))
+      let toViews = t.toViews
+      if (toViews === '' || toViews == null) toViews = null
+      else toViews = Math.max(fromViews, Math.floor(Number(toViews) || 0))
+      return {
+        fromViews,
+        toViews,
+        tokenCost: Math.max(1, Math.floor(Number(t.tokenCost) || 1)),
+        afterViews: fromViews,
+      }
+    })
+    .sort((a, b) => a.fromViews - b.fromViews)
+
+  if (!tiers.some((t) => t.fromViews === 0)) {
+    tiers.unshift({ fromViews: 0, toViews: null, tokenCost: fresh, afterViews: 0 })
+  }
+  const byFrom = new Map()
+  for (const t of tiers) byFrom.set(t.fromViews, t)
+  return [...byFrom.values()].sort((a, b) => a.fromViews - b.fromViews)
+}
+
+export function costFromUnlockTiers(unlockedCount, tiers, fallbackCost = 1) {
+  const count = Math.max(0, Math.floor(Number(unlockedCount) || 0))
+  const list = normalizeUnlockTiers(tiers, fallbackCost)
+  let matched = list[0].tokenCost
+  const hasInclusive = list.some(
+    (t) => count >= t.fromViews && (t.toViews == null || count <= t.toViews),
+  )
+  if (hasInclusive) {
+    for (const tier of list) {
+      if (count >= tier.fromViews && (tier.toViews == null || count <= tier.toViews)) {
+        matched = tier.tokenCost
+      }
+    }
+  } else {
+    for (const tier of list) {
+      if (count >= tier.fromViews) matched = tier.tokenCost
+    }
+  }
+  return matched
+}
+
+export function mapAdminLead(lead, leadViewLocked = false, maxUnlocksPerLead = 0, unlockTiers = null) {
   const customer = lead.request?.customer
   const user = customer?.user
   const firstName = customer?.firstName || ''
@@ -61,17 +141,47 @@ export function mapAdminLead(lead, leadViewLocked = false) {
   const locked =
     leadViewLocked || lead.status === 'CLOSED' || lead.status === 'CANCELLED'
 
+  const matchedCount = lead.matches?.length ?? lead.matchedCount ?? 0
+  const unlockedCount = lead.unlocks?.length ?? lead.unlockedCount ?? 0
+  const baseTokenCost = lead.tokenCost ?? lead.service?.tokenCost ?? 1
+  let rawCustom = lead.unlockTiers
+  if (typeof rawCustom === 'string') {
+    try {
+      rawCustom = JSON.parse(rawCustom)
+    } catch {
+      rawCustom = null
+    }
+  }
+  const leadCustomTiers =
+    Array.isArray(rawCustom) && rawCustom.length ? rawCustom : null
+  const tiers = normalizeUnlockTiers(leadCustomTiers || unlockTiers, baseTokenCost)
+  const tokenCost = costFromUnlockTiers(unlockedCount, tiers, baseTokenCost)
+  const maxUnlocks = Number(maxUnlocksPerLead) > 0 ? Number(maxUnlocksPerLead) : 0
+
   return {
     id: lead.id,
     name,
     firstName,
     lastName,
     ago: timeAgo(lead.createdAt),
+    createdAtMs: lead.createdAt ? new Date(lead.createdAt).getTime() : 0,
     service: lead.service?.name || '—',
     snippet,
     postcode: maskPostcode(lead.postcode),
     postcodeRaw: lead.postcode || customer?.postcode || '',
-    interest: lead.matches?.length || lead.matchedCount || lead.tokenCost || 0,
+    interest: matchedCount,
+    matchedCount,
+    unlockedCount,
+    maxUnlocks,
+    tokenCost,
+    baseTokenCost,
+    unlockTiers: tiers,
+    customUnlockTiers: leadCustomTiers,
+    hasCustomUnlockTiers: Boolean(leadCustomTiers),
+    unlockStatsLabel:
+      maxUnlocks > 0
+        ? `${unlockedCount}/${maxUnlocks} unlocks · ${matchedCount} matched`
+        : `${unlockedCount} unlocks · ${matchedCount} matched`,
     phone: customer?.phone || '—',
     email: user?.email || '—',
     locked,

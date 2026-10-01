@@ -1,6 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { MapPin, Zap, Phone, Mail } from 'lucide-react'
 import PhoneInput from './PhoneInput.jsx'
+import {
+  UnlockTokenTiersForm,
+  normalizeUnlockTiersForUi,
+  serializeUnlockTiers,
+} from './UnlockTokenTiersForm.jsx'
 import {
   DEFAULT_COUNTRY_CODE,
   dialForCountry,
@@ -139,22 +144,47 @@ export function LeadSplitView({
   searchPlaceholder = 'Search Lead.',
   items,
   filterLocked,
+  /** 'all' | 'locked' | 'unlocked' | 'recent' */
+  mode = 'all',
+  emptyMessage,
   showConfirm = false,
   onDelete,
   onEdit,
   onConfirm,
+  unlockTiers = null,
   loading = false,
+  leadViewLocked = false,
 }) {
   const [q, setQ] = useState('')
   const [editing, setEditing] = useState(null)
+  const [tokenLead, setTokenLead] = useState(null)
+  const [tiers, setTiers] = useState([])
+  const [useIndividual, setUseIndividual] = useState(false)
   const [form, setForm] = useState({})
   const [saving, setSaving] = useState(false)
+  const [tokenSaving, setTokenSaving] = useState(false)
   const [editError, setEditError] = useState('')
+  const [tokenError, setTokenError] = useState('')
 
   const list = useMemo(() => {
-    let rows = items || []
-    if (filterLocked === true) rows = rows.filter((l) => l.locked)
-    if (filterLocked === false) rows = rows.filter((l) => !l.locked)
+    let rows = [...(items || [])]
+    const resolvedMode =
+      mode ||
+      (filterLocked === true ? 'locked' : filterLocked === false ? 'unlocked' : 'all')
+
+    if (resolvedMode === 'locked') {
+      rows = rows.filter((l) => l.locked)
+    } else if (resolvedMode === 'unlocked') {
+      rows = rows.filter((l) => !l.locked)
+    } else if (resolvedMode === 'recent') {
+      const cutoff = Date.now() - 1000 * 60 * 60 * 24 * 30
+      rows = rows.filter((l) => {
+        if (l.status === 'CANCELLED') return false
+        if (!l.createdAtMs) return true
+        return l.createdAtMs >= cutoff
+      })
+    }
+
     const term = q.trim().toLowerCase()
     if (term) {
       rows = rows.filter(
@@ -165,10 +195,30 @@ export function LeadSplitView({
       )
     }
     return rows
-  }, [items, q, filterLocked])
+  }, [items, q, filterLocked, mode])
 
-  const [selectedId, setSelectedId] = useState(list[0]?.id)
-  const selected = list.find((l) => l.id === selectedId) || list[0]
+  const [selectedId, setSelectedId] = useState(null)
+
+  useEffect(() => {
+    if (!list.length) {
+      setSelectedId(null)
+      return
+    }
+    if (!selectedId || !list.some((l) => l.id === selectedId)) {
+      setSelectedId(list[0].id)
+    }
+  }, [list, selectedId])
+
+  const selected = list.find((l) => l.id === selectedId) || list[0] || null
+
+  const defaultEmpty =
+    mode === 'locked' || filterLocked === true
+      ? leadViewLocked
+        ? 'No locked leads found.'
+        : 'No locked leads right now. Use Dashboard → Lock Lead View to hold all leads from professionals, or close a lead to see it here.'
+      : mode === 'recent'
+        ? 'No recent leads found.'
+        : 'No leads found.'
 
   function openEdit(lead) {
     const parsed = parseIntlPhone(lead.phone === '—' ? '' : lead.phone || '')
@@ -190,6 +240,20 @@ export function LeadSplitView({
       })),
     })
     setEditError('')
+  }
+
+  function openTokens(lead) {
+    const individual = Boolean(lead.hasCustomUnlockTiers)
+    setTokenLead(lead)
+    setUseIndividual(individual)
+    setTiers(
+      normalizeUnlockTiersForUi(
+        individual
+          ? lead.customUnlockTiers || lead.unlockTiers
+          : unlockTiers || lead.unlockTiers,
+      ),
+    )
+    setTokenError('')
   }
 
   async function saveEdit(e) {
@@ -227,6 +291,29 @@ export function LeadSplitView({
     }
   }
 
+  async function saveTokens(e) {
+    e.preventDefault()
+    if (!onEdit || !tokenLead) return
+    setTokenSaving(true)
+    setTokenError('')
+    try {
+      if (!useIndividual) {
+        await onEdit(tokenLead.id, { unlockTiers: null })
+      } else {
+        const cleaned = serializeUnlockTiers(tiers)
+        await onEdit(tokenLead.id, {
+          unlockTiers: cleaned,
+          tokenCost: cleaned[0]?.tokenCost || 1,
+        })
+      }
+      setTokenLead(null)
+    } catch (err) {
+      setTokenError(err.message || 'Failed to update tokens for this lead')
+    } finally {
+      setTokenSaving(false)
+    }
+  }
+
   function updateDetail(index, value) {
     setForm((f) => ({
       ...f,
@@ -249,34 +336,42 @@ export function LeadSplitView({
               />
             </div>
             {loading ? <p className="p-4 text-sm text-slate-500">Loading…</p> : null}
-            {list.map((lead) => (
-              <button
-                key={lead.id}
-                type="button"
-                onClick={() => setSelectedId(lead.id)}
-                className={`w-full border-b border-slate-100 px-4 py-4 text-left transition hover:bg-slate-50 ${
-                  selected?.id === lead.id ? 'bg-blue/5' : ''
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <p className="font-semibold text-navy">{lead.name}</p>
-                  <span className="rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-semibold text-white">
-                    {lead.ago}
-                  </span>
-                </div>
-                <p className="mt-1 font-bold text-navy">{lead.service}</p>
-                <p className="mt-1 line-clamp-2 text-xs text-slate-500">{lead.snippet}</p>
-                <div className="mt-2 flex items-center gap-3 text-xs text-slate-500">
-                  <span className="inline-flex items-center gap-1">
-                    <MapPin className="size-3.5 text-blue" strokeWidth={2} /> {lead.postcode}
-                  </span>
-                  <span className="inline-flex items-center gap-1">
-                    <Zap className="size-3.5 text-blue" strokeWidth={2} /> {lead.interest}
-                  </span>
-                </div>
-              </button>
-            ))}
-            {!list.length ? <p className="p-4 text-sm text-slate-500">No leads found.</p> : null}
+            {!loading
+              ? list.map((lead) => (
+                  <button
+                    key={lead.id}
+                    type="button"
+                    onClick={() => setSelectedId(lead.id)}
+                    className={`w-full border-b border-slate-100 px-4 py-4 text-left transition hover:bg-slate-50 ${
+                      selected?.id === lead.id ? 'bg-blue/5' : ''
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-semibold text-navy">{lead.name}</p>
+                      <span className="rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-semibold text-white">
+                        {lead.ago}
+                      </span>
+                    </div>
+                    <p className="mt-1 font-bold text-navy">{lead.service}</p>
+                    <p className="mt-1 line-clamp-2 text-xs text-slate-500">{lead.snippet}</p>
+                    <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-500">
+                      <span className="inline-flex items-center gap-1">
+                        <MapPin className="size-3.5 text-blue" strokeWidth={2} /> {lead.postcode}
+                      </span>
+                      <span className="inline-flex items-center gap-1">
+                        <Zap className="size-3.5 text-blue" strokeWidth={2} /> {lead.tokenCost ?? 1}{' '}
+                        token{(lead.tokenCost ?? 1) === 1 ? '' : 's'} next
+                      </span>
+                      <span className="text-slate-400">
+                        {lead.unlockStatsLabel || `${lead.unlockedCount || 0} unlocks`}
+                      </span>
+                    </div>
+                  </button>
+                ))
+              : null}
+            {!loading && !list.length ? (
+              <p className="p-4 text-sm text-slate-500">{emptyMessage || defaultEmpty}</p>
+            ) : null}
           </aside>
 
           <div className="flex-1 p-5 sm:p-7">
@@ -291,9 +386,14 @@ export function LeadSplitView({
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {onEdit ? (
-                      <Button variant="secondary" onClick={() => openEdit(selected)}>
-                        Edit
-                      </Button>
+                      <>
+                        <Button variant="secondary" onClick={() => openEdit(selected)}>
+                          Edit
+                        </Button>
+                        <Button variant="secondary" onClick={() => openTokens(selected)}>
+                          Tokens
+                        </Button>
+                      </>
                     ) : null}
                     <Button
                       variant="danger"
@@ -311,6 +411,24 @@ export function LeadSplitView({
                 </div>
 
                 <p className="mt-4 text-lg font-bold text-navy">{selected.service}</p>
+                <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                  <span className="rounded-full bg-blue/10 px-2.5 py-1 font-semibold text-blue">
+                    {selected.tokenCost ?? 1} token{(selected.tokenCost ?? 1) === 1 ? '' : 's'} next
+                    unlock
+                    <span className="ml-1 opacity-70">
+                      ({selected.hasCustomUnlockTiers ? 'individual' : 'default'})
+                    </span>
+                  </span>
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-600">
+                    {selected.matchedCount ?? 0} matched pro
+                    {(selected.matchedCount ?? 0) === 1 ? '' : 's'}
+                  </span>
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-600">
+                    {selected.maxUnlocks > 0
+                      ? `${selected.unlockedCount ?? 0}/${selected.maxUnlocks} unlocks`
+                      : `${selected.unlockedCount ?? 0} unlocks`}
+                  </span>
+                </div>
                 <div className="mt-3 flex flex-col gap-1.5 text-sm text-slate-600">
                   <p className="flex items-center gap-2">
                     <Phone className="size-4 shrink-0 text-blue" strokeWidth={2} />
@@ -327,8 +445,8 @@ export function LeadSplitView({
                     Details Provided
                   </h3>
                   <ul className="mt-4 space-y-3 text-sm">
-                    {selected.details.map((d) => (
-                      <li key={d.q}>
+                    {(selected.details || []).map((d, idx) => (
+                      <li key={d.questionId || `${d.q}-${idx}`}>
                         <span className="text-slate-600">• {d.q}</span>{' '}
                         {d.a ? <span className="font-bold text-navy">{d.a}</span> : null}
                       </li>
@@ -416,6 +534,75 @@ export function LeadSplitView({
               </Button>
               <Button type="submit" disabled={saving}>
                 {saving ? 'Saving…' : 'Save changes'}
+              </Button>
+            </div>
+          </form>
+        ) : null}
+      </Modal>
+
+      <Modal
+        open={!!tokenLead}
+        title={tokenLead ? `Tokens · ${tokenLead.name}` : 'Adjust tokens'}
+        onClose={() => setTokenLead(null)}
+        wide
+      >
+        {tokenLead ? (
+          <form className="space-y-3" onSubmit={saveTokens}>
+            {tokenError ? <p className="text-sm text-warn">{tokenError}</p> : null}
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3">
+              <input
+                type="checkbox"
+                className="mt-1 size-4 accent-blue"
+                checked={useIndividual}
+                onChange={(e) => {
+                  const on = e.target.checked
+                  setUseIndividual(on)
+                  if (on) {
+                    setTiers(
+                      normalizeUnlockTiersForUi(
+                        tokenLead.customUnlockTiers || unlockTiers || tokenLead.unlockTiers,
+                      ),
+                    )
+                  }
+                }}
+              />
+              <span>
+                <span className="block text-sm font-semibold text-navy">
+                  Use individual token system for this lead
+                </span>
+                <span className="mt-0.5 block text-xs text-slate-500">
+                  Off = common Default Token Adjust for all leads. On = custom from/to options for
+                  this lead only.
+                </span>
+              </span>
+            </label>
+
+            {!useIndividual ? (
+              <p className="rounded-lg border border-blue/20 bg-blue/5 px-3 py-2 text-sm text-slate-600">
+                This lead uses the <strong>common</strong> token system from{' '}
+                <strong>Default Token Adjust</strong>.
+              </p>
+            ) : (
+              <>
+                <p className="text-xs text-slate-500">
+                  Current next unlock: {tokenLead.tokenCost ?? 1} token
+                  {(tokenLead.tokenCost ?? 1) === 1 ? '' : 's'} · {tokenLead.unlockedCount ?? 0}{' '}
+                  person view{(tokenLead.unlockedCount ?? 0) === 1 ? '' : 's'}
+                </p>
+                <UnlockTokenTiersForm tiers={tiers} onChange={setTiers} />
+              </>
+            )}
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="secondary" onClick={() => setTokenLead(null)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={tokenSaving}>
+                {tokenSaving
+                  ? 'Saving…'
+                  : useIndividual
+                    ? 'Save individual tokens'
+                    : 'Use common defaults'}
               </Button>
             </div>
           </form>

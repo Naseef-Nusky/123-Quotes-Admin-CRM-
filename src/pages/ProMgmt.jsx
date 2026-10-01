@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { FolderTree, HelpCircle, Plus, Search } from 'lucide-react'
 import { api } from '../api/client.js'
 import {
@@ -92,6 +93,7 @@ function mapServices(list) {
     categoryId: s.categoryId || s.category?.id,
     name: s.name,
     description: s.shortDesc || s.description || '',
+    tokenCost: s.tokenCost ?? 1,
     questionCount: s._count?.questions ?? (s.questions || []).length,
     questions: null, // loaded on demand
   }))
@@ -245,6 +247,7 @@ export default function ProMgmt() {
           name,
           shortDesc: catModal.description || '',
           description: catModal.description || '',
+          tokenCost: 1,
           isActive: true,
         })
         setCatModal(null)
@@ -456,11 +459,21 @@ export default function ProMgmt() {
                   {selected.description ? (
                     <p className="mt-1 text-sm text-slate-500">{selected.description}</p>
                   ) : null}
+                  <p className="mt-2 text-sm font-semibold text-blue">
+                    Unlock cost: {selected.tokenCost ?? 1} token
+                    {(selected.tokenCost ?? 1) === 1 ? '' : 's'}
+                  </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Button variant="secondary" onClick={() => openEditCategory(selected)}>
                     Edit
                   </Button>
+                  <Link
+                    to="/token-adjust"
+                    className="inline-flex items-center justify-center rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-navy hover:bg-slate-50"
+                  >
+                    Tokens
+                  </Link>
                   <Button variant="danger" onClick={() => deleteCategory(selected)}>
                     Delete
                   </Button>
