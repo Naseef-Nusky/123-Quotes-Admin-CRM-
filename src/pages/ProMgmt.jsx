@@ -12,20 +12,78 @@ import {
   Textarea,
 } from '../components/ui.jsx'
 
-const CHILD_TYPES = ['Radio Button', 'Checkbox', 'Dropdown', 'Text']
+const CHILD_TYPES = [
+  { value: 'Single select radio', label: 'Single select (radio)' },
+  { value: 'Single select checkbox', label: 'Single select (checkbox)' },
+  { value: 'Multiple select checkbox', label: 'Multiple select (checkbox)' },
+  { value: 'Multiple select radio', label: 'Multiple select (radio)' },
+  { value: 'Dropdown', label: 'Dropdown' },
+  { value: 'Text', label: 'Text' },
+]
 
 function uiTypeToApi(type) {
-  if (type === 'Checkbox') return 'MULTIPLE_CHOICE'
+  if (type === 'Multiple select checkbox' || type === 'Multiple select' || type === 'Checkbox') {
+    return 'MULTIPLE_CHOICE'
+  }
+  if (type === 'Multiple select radio') return 'MULTIPLE_RADIO'
+  if (type === 'Single select checkbox') return 'SINGLE_CHECKBOX'
   if (type === 'Dropdown') return 'DROPDOWN'
   if (type === 'Text') return 'TEXT'
+  // Single select radio / Radio Button / default
   return 'SINGLE_CHOICE'
 }
 
 function apiTypeToUi(type) {
-  if (type === 'MULTIPLE_CHOICE') return 'Checkbox'
+  if (type === 'MULTIPLE_CHOICE') return 'Multiple select checkbox'
+  if (type === 'MULTIPLE_RADIO') return 'Multiple select radio'
+  if (type === 'SINGLE_CHECKBOX') return 'Single select checkbox'
   if (type === 'DROPDOWN') return 'Dropdown'
   if (type === 'TEXT' || type === 'TEXTAREA') return 'Text'
-  return 'Radio Button'
+  return 'Single select radio'
+}
+
+function typeHint(uiType) {
+  if (uiType === 'Multiple select checkbox' || uiType === 'Multiple select' || uiType === 'Checkbox') {
+    return 'Customers can tick one or more checkbox options.'
+  }
+  if (uiType === 'Multiple select radio') {
+    return 'Customers can pick one or more options shown as radio buttons.'
+  }
+  if (uiType === 'Single select checkbox') {
+    return 'Customers pick only one option, shown as checkboxes.'
+  }
+  if (uiType === 'Single select radio' || uiType === 'Radio Button') {
+    return 'Customers pick only one option, shown as radio buttons.'
+  }
+  if (uiType === 'Dropdown') {
+    return 'Customers pick one option from a dropdown list.'
+  }
+  return 'Customers type a free-text answer.'
+}
+
+function isMultiUiType(uiType) {
+  return (
+    uiType === 'Multiple select checkbox' ||
+    uiType === 'Multiple select radio' ||
+    uiType === 'Multiple select' ||
+    uiType === 'Checkbox'
+  )
+}
+
+function needsOptions(uiType) {
+  return uiType !== 'Text'
+}
+
+function uniqueOptionValue(label, index, used) {
+  const base = String(label || '').trim() || `option-${index + 1}`
+  let value = base
+  let n = 2
+  while (used.has(value)) {
+    value = `${base} (${n})`
+    n += 1
+  }
+  used.add(value)
+  return value
 }
 
 function mapServices(list) {
@@ -230,19 +288,22 @@ export default function ProMgmt() {
       mode: 'add',
       serviceId: service.id,
       text: '',
-      childType: 'Radio Button',
+      childType: 'Single select radio',
       answers: [emptyAnswer(), emptyAnswer()],
     })
     setError('')
   }
 
   function openEditQuestion(service, question) {
+    let childType = question.type || 'Single select radio'
+    if (childType === 'Checkbox' || childType === 'Multiple select') childType = 'Multiple select checkbox'
+    if (childType === 'Radio Button') childType = 'Single select radio'
     setQModal({
       mode: 'edit',
       serviceId: service.id,
       questionId: question.id,
       text: question.text || '',
-      childType: question.type || 'Radio Button',
+      childType,
       answers: question.answers?.length
         ? question.answers.map((a) => ({ ...a }))
         : [emptyAnswer()],
@@ -258,15 +319,20 @@ export default function ProMgmt() {
       return
     }
 
+    const usedValues = new Set()
     const answers = (qModal.answers || [])
-      .map((a) => ({
-        label: String(a.label || '').trim(),
-        value: String(a.label || '').trim(),
-      }))
-      .filter((a) => a.label)
+      .map((a, idx) => {
+        const label = String(a.label || '').trim()
+        if (!label) return null
+        return {
+          label,
+          value: uniqueOptionValue(label, idx, usedValues),
+        }
+      })
+      .filter(Boolean)
 
     const type = uiTypeToApi(qModal.childType)
-    if (type !== 'TEXT' && !answers.length) {
+    if (needsOptions(qModal.childType) && type !== 'TEXT' && !answers.length) {
       setError('Add at least one answer option for this question type.')
       return
     }
@@ -420,11 +486,23 @@ export default function ProMgmt() {
                         <div>
                           <p className="font-semibold text-navy">{question.text}</p>
                           <p className="mt-1 text-xs text-slate-500">
-                            Type: {question.type}
+                            Type:{' '}
+                            <span
+                              className={
+                                isMultiUiType(question.type)
+                                  ? 'font-semibold text-blue'
+                                  : 'font-medium text-navy'
+                              }
+                            >
+                              {question.type}
+                            </span>
                             {question.answers?.length
                               ? ` · ${question.answers.length} option(s)`
                               : ''}
                           </p>
+                          {isMultiUiType(question.type) ? (
+                            <p className="mt-1 text-xs text-blue">Allows multiple answers</p>
+                          ) : null}
                           {question.answers?.length ? (
                             <ul className="mt-2 space-y-1 text-sm text-slate-600">
                               {question.answers.map((a) => (
@@ -517,20 +595,30 @@ export default function ProMgmt() {
             />
             <Select
               label="Answer type"
-              value={qModal.childType}
+              value={
+                qModal.childType === 'Checkbox' || qModal.childType === 'Multiple select'
+                  ? 'Multiple select checkbox'
+                  : qModal.childType === 'Radio Button'
+                    ? 'Single select radio'
+                    : qModal.childType
+              }
               onChange={(e) => setQModal((m) => ({ ...m, childType: e.target.value }))}
             >
               {CHILD_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
+                <option key={t.value} value={t.value}>
+                  {t.label}
                 </option>
               ))}
             </Select>
+            <p className="-mt-1 text-xs text-slate-500">{typeHint(qModal.childType)}</p>
 
-            {qModal.childType !== 'Text' ? (
+            {needsOptions(qModal.childType) ? (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-navy">Answer options</p>
+                  <p className="text-sm font-semibold text-navy">
+                    Answer options
+                    {isMultiUiType(qModal.childType) ? ' (multiple allowed)' : ' (pick one)'}
+                  </p>
                   <Button
                     type="button"
                     variant="secondary"

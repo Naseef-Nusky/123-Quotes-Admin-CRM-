@@ -41,7 +41,8 @@ export function LeadAnswerField({ detail, onChange }) {
     )
   }
 
-  if (type === 'SINGLE_CHOICE' && options.length) {
+  if ((type === 'SINGLE_CHOICE' || type === 'SINGLE_CHECKBOX') && options.length) {
+    const control = type === 'SINGLE_CHECKBOX' ? 'checkbox' : 'radio'
     return (
       <fieldset className="space-y-2">
         <legend className="text-sm font-semibold text-navy">{detail.q}</legend>
@@ -56,8 +57,8 @@ export function LeadAnswerField({ detail, onChange }) {
               }`}
             >
               <input
-                type="radio"
-                name={`lead-q-${detail.questionId || detail.q}`}
+                type={control}
+                name={control === 'radio' ? `lead-q-${detail.questionId || detail.q}` : undefined}
                 className="size-4 accent-blue"
                 checked={detail.a === opt.value}
                 onChange={() => onChange(opt.value)}
@@ -70,8 +71,9 @@ export function LeadAnswerField({ detail, onChange }) {
     )
   }
 
-  if (type === 'MULTIPLE_CHOICE' && options.length) {
+  if ((type === 'MULTIPLE_CHOICE' || type === 'MULTIPLE_RADIO') && options.length) {
     const selected = splitMultiValue(detail.a)
+    const control = type === 'MULTIPLE_RADIO' ? 'radio' : 'checkbox'
     return (
       <fieldset className="space-y-2">
         <legend className="text-sm font-semibold text-navy">{detail.q}</legend>
@@ -79,6 +81,13 @@ export function LeadAnswerField({ detail, onChange }) {
           {options.map((opt) => {
             const checked =
               selected.includes(opt.value) || (opt.label && selected.includes(opt.label))
+            const applyToggle = () => {
+              const token = opt.value
+              const next = checked
+                ? selected.filter((v) => v !== opt.value && v !== opt.label)
+                : [...selected.filter((v) => v !== opt.value && v !== opt.label), token]
+              onChange(next.join(', '))
+            }
             return (
               <label
                 key={opt.id || opt.value}
@@ -87,16 +96,18 @@ export function LeadAnswerField({ detail, onChange }) {
                 }`}
               >
                 <input
-                  type="checkbox"
+                  type={control}
                   className="size-4 accent-blue"
                   checked={checked}
-                  onChange={() => {
-                    const token = opt.value
-                    const next = checked
-                      ? selected.filter((v) => v !== opt.value && v !== opt.label)
-                      : [...selected.filter((v) => v !== opt.value && v !== opt.label), token]
-                    onChange(next.join(', '))
-                  }}
+                  onChange={control === 'checkbox' ? applyToggle : undefined}
+                  onClick={
+                    control === 'radio'
+                      ? (e) => {
+                          e.preventDefault()
+                          applyToggle()
+                        }
+                      : undefined
+                  }
                 />
                 {opt.label}
               </label>
