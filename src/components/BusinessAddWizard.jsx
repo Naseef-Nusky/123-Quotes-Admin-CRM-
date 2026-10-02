@@ -72,8 +72,8 @@ export default function BusinessAddWizard({
       setError('Please select a service type.')
       return
     }
-    if (form.password.length < 6) {
-      setError('Password must be at least 6 characters.')
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters.')
       return
     }
     if (form.password !== form.confirmPassword) {
@@ -208,7 +208,7 @@ export default function BusinessAddWizard({
                 value={form.password}
                 onChange={update('password')}
                 required
-                minLength={6}
+                minLength={8}
                 className="w-full rounded-md border border-slate-200 px-3 py-2.5 pr-11 text-sm font-normal outline-none focus:border-blue focus:ring-2 focus:ring-blue/20"
               />
               <button
@@ -230,7 +230,7 @@ export default function BusinessAddWizard({
                 value={form.confirmPassword}
                 onChange={update('confirmPassword')}
                 required
-                minLength={6}
+                minLength={8}
                 className="w-full rounded-md border border-slate-200 px-3 py-2.5 pr-11 text-sm font-normal outline-none focus:border-blue focus:ring-2 focus:ring-blue/20"
               />
               <button

@@ -6,8 +6,8 @@ import { Button } from '../components/ui.jsx'
 
 export default function Login() {
   const { user, login } = useAuth()
-  const [email, setEmail] = useState('superadmin@123quotes.com')
-  const [password, setPassword] = useState('superadmin123')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)

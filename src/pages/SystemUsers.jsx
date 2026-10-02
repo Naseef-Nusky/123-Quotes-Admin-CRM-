@@ -385,7 +385,7 @@ export default function SystemUsers() {
             value={form.password}
             onChange={(e) => setField('password', e.target.value)}
             required={!editing}
-            minLength={editing ? undefined : 6}
+            minLength={editing ? undefined : 8}
             placeholder={editing ? 'Leave blank to keep current' : 'Min 6 characters'}
           />
           {isSuper ? (
