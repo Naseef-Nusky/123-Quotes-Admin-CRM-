@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react'
 import { api } from '../api/client.js'
 import { mapBusinessApplication } from '../lib/mappers.js'
 import BusinessAddWizard from '../components/BusinessAddWizard.jsx'
-import { Button, Card, ErrorBanner, Modal, PageHeader } from '../components/ui.jsx'
+import { Button, Card, ErrorBanner, Loading, Modal, PageHeader } from '../components/ui.jsx'
 
 export default function BusinessRegistration() {
   const [regs, setRegs] = useState([])
@@ -92,7 +92,7 @@ export default function BusinessRegistration() {
       />
       {flash ? <p className="mb-3 text-sm font-semibold text-ok">{flash}</p> : null}
       <ErrorBanner message={error} />
-      {loading ? <p className="mb-3 text-sm text-slate-500">Loading…</p> : null}
+      {loading ? <Loading className="mb-3 py-6" /> : null}
       <Card className="overflow-hidden p-0">
         <table className="w-full text-left text-sm">
           <thead className="bg-slate-50 text-slate-500">

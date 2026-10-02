@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../api/client.js'
 import { DataTable } from '../components/AdminViews.jsx'
-import { Button, ErrorBanner, Modal, StatusBadge, formatDate, formatMoney } from '../components/ui.jsx'
+import { Button, ErrorBanner, Loading, Modal, StatusBadge, formatDate, formatMoney } from '../components/ui.jsx'
 
 function displayName(user) {
   if (!user) return '—'
@@ -105,14 +105,13 @@ export default function PaymentDetails({ variant = 'recent' }) {
     ? ['name', 'email', 'phone', 'package', 'status']
     : ['name', 'email', 'phone', 'package', 'reference', 'status']
 
-  const subtitle = loading
-    ? 'Loading Square payment records…'
-    : 'Mock purchases (PAYMENTS_ENABLED=false) appear here only — not in Square.com. Live sandbox charges need Square keys + PAYMENTS_ENABLED=true.'
+  const subtitle =
+    'Mock purchases (PAYMENTS_ENABLED=false) appear here only — not in Square.com. Live sandbox charges need Square keys + PAYMENTS_ENABLED=true.'
 
   return (
     <div>
       <ErrorBanner message={error} />
-      <p className="mb-2 text-sm text-slate-500">{subtitle}</p>
+      {loading ? <Loading className="mb-3 py-6" /> : <p className="mb-2 text-sm text-slate-500">{subtitle}</p>}
       <DataTable
         title={isPurchases ? 'Recent purchases' : 'Square Payments'}
         columns={columns}

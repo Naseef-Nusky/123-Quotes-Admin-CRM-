@@ -152,7 +152,11 @@ export default function PostcodeInput({
 
       {open && !disabled ? (
         <ul className="absolute z-50 mt-1 max-h-56 w-full overflow-auto rounded-md border border-slate-200 bg-white py-1 shadow-lg">
-          {loading ? <li className="px-3 py-2 text-sm text-slate-500">Loading…</li> : null}
+          {loading ? (
+            <li className="grid place-items-center px-3 py-3">
+              <div className="size-5 animate-spin rounded-full border-2 border-blue border-t-transparent" />
+            </li>
+          ) : null}
           {!loading && !filtered.length ? (
             <li className="px-3 py-2 text-sm text-slate-500">No matches</li>
           ) : null}

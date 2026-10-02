@@ -5,6 +5,7 @@ import {
   Button,
   ErrorBanner,
   Input,
+  Loading,
   Modal,
   PageHeader,
   Select,
@@ -194,7 +195,7 @@ export default function TokenPackages() {
         />
       </div>
 
-      {loading ? <p className="mb-3 text-sm text-slate-500">Loading packages…</p> : null}
+      {loading ? <Loading className="mb-3 py-6" /> : null}
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-left text-sm">

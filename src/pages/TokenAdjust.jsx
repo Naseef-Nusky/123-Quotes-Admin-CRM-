@@ -6,7 +6,7 @@ import {
   normalizeUnlockTiersForUi,
   serializeUnlockTiers,
 } from '../components/UnlockTokenTiersForm.jsx'
-import { Button, Card, ErrorBanner, PageHeader } from '../components/ui.jsx'
+import { Button, Card, ErrorBanner, Loading, PageHeader } from '../components/ui.jsx'
 
 export default function TokenAdjust() {
   const [error, setError] = useState('')
@@ -75,7 +75,7 @@ export default function TokenAdjust() {
 
       <Card className="p-5">
         {loading ? (
-          <p className="text-sm text-slate-500">Loading token options…</p>
+          <Loading className="py-8" />
         ) : (
           <form className="space-y-4" onSubmit={savePricing}>
             <UnlockTokenTiersForm

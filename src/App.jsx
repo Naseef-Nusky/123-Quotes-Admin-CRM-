@@ -17,18 +17,12 @@ import SystemUsers from './pages/SystemUsers.jsx'
 import BusinessRegistration from './pages/BusinessRegistration.jsx'
 import Customers from './pages/Customers.jsx'
 import CategoryErrors from './pages/CategoryErrors.jsx'
+import { Loading } from './components/ui.jsx'
 
 function Protected({ children }) {
   const { user, loading } = useAuth()
   if (loading) {
-    return (
-      <div className="grid min-h-screen place-items-center bg-canvas text-slate-500">
-        <div className="text-center">
-          <div className="mx-auto mb-3 size-8 animate-spin rounded-full border-2 border-blue border-t-transparent" />
-          <p className="text-sm">Loading CRM…</p>
-        </div>
-      </div>
-    )
+    return <Loading overlay />
   }
   if (!user || (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN')) {
     return <Navigate to="/login" replace />

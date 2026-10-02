@@ -6,7 +6,7 @@ import {
   normalizeUnlockTiersForUi,
   serializeUnlockTiers,
 } from '../components/UnlockTokenTiersForm.jsx'
-import { Button, ErrorBanner, Input, Modal, Select } from '../components/ui.jsx'
+import { Button, ErrorBanner, Input, Loading, Modal, Select } from '../components/ui.jsx'
 import {
   DEFAULT_COUNTRY_CODE,
   dialForCountry,
@@ -193,7 +193,7 @@ export default function Leads() {
   return (
     <div>
       <ErrorBanner message={error} />
-      {loading ? <p className="mb-3 text-sm text-slate-500">Loading leads…</p> : null}
+      {loading ? <Loading className="mb-3 py-6" /> : null}
       <DataTable
         title="Leads"
         columns={columns}

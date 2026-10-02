@@ -176,8 +176,32 @@ export function ErrorBanner({ message }) {
   )
 }
 
-export function Loading() {
-  return <p className="py-10 text-center text-sm text-slate-500">Loading…</p>
+export function Loading({ className = '', overlay = false } = {}) {
+  const ring = (
+    <div className="size-8 animate-spin rounded-full border-2 border-blue border-t-transparent" />
+  )
+
+  if (overlay) {
+    return (
+      <div
+        className={`fixed inset-0 z-[100] grid place-items-center backdrop-blur-[2px] ${className}`}
+        aria-busy="true"
+        aria-label="Loading"
+      >
+        {ring}
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className={`grid min-h-[8rem] place-items-center rounded-xl backdrop-blur-[2px] ${className}`}
+      aria-busy="true"
+      aria-label="Loading"
+    >
+      {ring}
+    </div>
+  )
 }
 
 export function formatMoney(cents, currency = 'GBP') {

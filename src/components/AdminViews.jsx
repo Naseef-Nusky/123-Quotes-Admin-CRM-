@@ -12,7 +12,7 @@ import {
   formatIntlPhone,
   parseIntlPhone,
 } from '../data/countryDialCodes.js'
-import { Button, Card, Input, Modal, Select, Textarea } from './ui.jsx'
+import { Button, Card, Input, Loading, Modal, Select, Textarea } from './ui.jsx'
 
 const LEAD_STATUSES = ['OPEN', 'MATCHED', 'PARTIALLY_UNLOCKED', 'CLOSED', 'CANCELLED']
 
@@ -335,7 +335,7 @@ export function LeadSplitView({
                 onChange={(e) => setQ(e.target.value)}
               />
             </div>
-            {loading ? <p className="p-4 text-sm text-slate-500">Loading…</p> : null}
+            {loading ? <Loading className="py-8" /> : null}
             {!loading
               ? list.map((lead) => (
                   <button

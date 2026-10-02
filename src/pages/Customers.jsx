@@ -7,6 +7,7 @@ import {
   Button,
   ErrorBanner,
   Input,
+  Loading,
   Modal,
   PageHeader,
   Select,
@@ -251,7 +252,7 @@ export default function Customers() {
 
       {flash ? <p className="mb-3 text-sm font-semibold text-ok">{flash}</p> : null}
       <ErrorBanner message={error} />
-      {loading ? <p className="mb-3 text-sm text-slate-500">Loading customers…</p> : null}
+      {loading ? <Loading className="mb-3 py-6" /> : null}
 
       <DataTable title="Customers" columns={columns} rows={filtered} searchKeys={[]} />
 

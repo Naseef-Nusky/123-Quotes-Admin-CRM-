@@ -9,6 +9,7 @@ import {
   Button,
   ErrorBanner,
   Input,
+  Loading,
   Modal,
   PageHeader,
   Select,
@@ -215,7 +216,7 @@ export default function Professionals() {
 
       {flash ? <p className="mb-3 text-sm font-semibold text-ok">{flash}</p> : null}
       <ErrorBanner message={error && mode !== 'edit' ? error : ''} />
-      {loading ? <p className="mb-3 text-sm text-slate-500">Loading professionals…</p> : null}
+      {loading ? <Loading className="mb-3 py-6" /> : null}
       <DataTable
         title="Professional"
         columns={columns}

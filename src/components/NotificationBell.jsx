@@ -116,7 +116,9 @@ export default function NotificationBell() {
           </div>
           <div className="max-h-80 overflow-y-auto">
             {loading && !items.length ? (
-              <p className="px-4 py-6 text-center text-sm text-slate-500">Loading…</p>
+              <div className="grid place-items-center px-4 py-6">
+                <div className="size-6 animate-spin rounded-full border-2 border-blue border-t-transparent" />
+              </div>
             ) : null}
             {!loading && !items.length ? (
               <p className="px-4 py-6 text-center text-sm text-slate-500">No notifications yet.</p>

@@ -7,6 +7,7 @@ import {
   Card,
   ErrorBanner,
   Input,
+  Loading,
   Modal,
   PageHeader,
   Select,
@@ -406,7 +407,7 @@ export default function ProMgmt() {
 
       {flash ? <p className="mb-4 text-sm font-semibold text-ok">{flash}</p> : null}
       <ErrorBanner message={error} />
-      {loading ? <p className="mb-4 text-sm text-slate-500">Loading services…</p> : null}
+      {loading ? <Loading className="mb-4 py-6" /> : null}
 
       <div className="mb-4">
         <div className="relative max-w-md">
@@ -486,7 +487,7 @@ export default function ProMgmt() {
 
               <div className="space-y-3 p-5">
                 {questionsLoading && selected.questions == null ? (
-                  <p className="text-sm text-slate-500">Loading questions…</p>
+                  <Loading className="py-6" />
                 ) : null}
                 {(selected.questions || []).map((question) => (
                   <div

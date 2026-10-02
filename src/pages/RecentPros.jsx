@@ -8,6 +8,7 @@ import {
   Card,
   ErrorBanner,
   Input,
+  Loading,
   Modal,
   Textarea,
 } from '../components/ui.jsx'
@@ -142,7 +143,7 @@ export default function RecentPros() {
       <h1 className="mb-4 text-2xl font-bold text-navy">Recent Pro.</h1>
       {flash ? <p className="mb-3 text-sm font-semibold text-ok">{flash}</p> : null}
       <ErrorBanner message={error} />
-      {loading ? <p className="mb-3 text-sm text-slate-500">Loading…</p> : null}
+      {loading ? <Loading className="mb-3 py-6" /> : null}
       <Card className="overflow-hidden p-0">
         <div className="flex h-[calc(100vh-12rem)] min-h-[520px] flex-col lg:flex-row">
           <aside className="flex max-h-[40vh] w-full flex-col border-b border-slate-200 lg:max-h-none lg:h-full lg:w-[360px] lg:border-b-0 lg:border-r">

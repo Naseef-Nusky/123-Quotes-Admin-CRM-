@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api } from '../api/client.js'
-import { Button, Card, ErrorBanner, PageHeader } from '../components/ui.jsx'
+import { Button, Card, ErrorBanner, Loading, PageHeader } from '../components/ui.jsx'
 
 const SETTING_KEY = 'category_errors'
 
@@ -62,7 +62,7 @@ export default function CategoryErrors() {
         subtitle="Fix incorrect categories submitted with leads."
       />
       <ErrorBanner message={error} />
-      {loading ? <p className="mb-3 text-sm text-slate-500">Loading…</p> : null}
+      {loading ? <Loading className="mb-3 py-6" /> : null}
       <Card className="overflow-hidden p-0">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[800px] text-left text-sm">
