@@ -113,7 +113,7 @@ export default function TokenPackages() {
     const tokens = Number(form.tokens)
     const pricePounds = Number(form.pricePounds)
     if (!Number.isFinite(tokens) || tokens <= 0) {
-      setError('Points must be a positive number.')
+      setError('Tokens must be a positive number.')
       return
     }
     if (!Number.isFinite(pricePounds) || pricePounds < 0) {
@@ -174,7 +174,7 @@ export default function TokenPackages() {
     <div>
       <PageHeader
         title="Token packages"
-        subtitle="Edit point packs shown when professionals recharge to reach out to leads."
+        subtitle="Edit token packs shown when professionals recharge to reach out to leads."
         actions={
           <Button onClick={openAdd}>
             <Plus className="mr-1.5 size-4" />
@@ -202,7 +202,7 @@ export default function TokenPackages() {
           <thead className="bg-slate-50 text-slate-500">
             <tr>
               <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Points</th>
+              <th className="px-4 py-3">Tokens</th>
               <th className="px-4 py-3">Price</th>
               <th className="px-4 py-3">Sort</th>
               <th className="px-4 py-3">Status</th>
@@ -268,7 +268,7 @@ export default function TokenPackages() {
             label="Name"
             value={form.name}
             onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-            placeholder="e.g. 100 Points"
+            placeholder="e.g. 100 Tokens"
             required
           />
           <Textarea
@@ -280,7 +280,7 @@ export default function TokenPackages() {
           />
           <div className="grid gap-4 sm:grid-cols-2">
             <Input
-              label="Points"
+              label="Tokens"
               type="number"
               min="1"
               step="1"
