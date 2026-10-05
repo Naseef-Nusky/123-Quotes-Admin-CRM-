@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { MapPin, Zap, Phone, Mail } from 'lucide-react'
 import PhoneInput from './PhoneInput.jsx'
+import PostcodeInput from './PostcodeInput.jsx'
 import {
   UnlockTokenTiersForm,
   normalizeUnlockTiersForUi,
@@ -494,11 +495,16 @@ export function LeadSplitView({
                 />
               </div>
             </label>
-            <Input
-              label="Postcode"
-              value={form.postcode}
-              onChange={(e) => setForm((f) => ({ ...f, postcode: e.target.value }))}
-            />
+            <label className="block text-sm font-semibold text-navy">
+              Postcode
+              <div className="mt-1 font-normal">
+                <PostcodeInput
+                  value={form.postcode}
+                  onChange={(v) => setForm((f) => ({ ...f, postcode: v }))}
+                  placeholder="Search or add postcode…"
+                />
+              </div>
+            </label>
             <Select
               label="Status"
               value={form.status}

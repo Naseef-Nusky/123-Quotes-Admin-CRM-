@@ -142,4 +142,18 @@ export const api = {
   listPostcodes: () => request('/postcodes/list'),
   suggestPostcodes: (q, limit = 40) =>
     request(`/postcodes/suggest?q=${encodeURIComponent(q)}&limit=${limit}`),
+  managePostcodes: (params = {}) => {
+    const qs = new URLSearchParams()
+    for (const [key, value] of Object.entries(params)) {
+      if (value === undefined || value === null || value === '') continue
+      qs.set(key, String(value))
+    }
+    const q = qs.toString()
+    return request(`/postcodes/manage${q ? `?${q}` : ''}`)
+  },
+  createPostcode: (body) =>
+    request('/postcodes/manage', { method: 'POST', body: JSON.stringify(body) }),
+  updatePostcode: (id, body) =>
+    request(`/postcodes/manage/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
+  deletePostcode: (id) => request(`/postcodes/manage/${id}`, { method: 'DELETE' }),
 }

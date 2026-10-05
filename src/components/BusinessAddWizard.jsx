@@ -295,7 +295,7 @@ export default function BusinessAddWizard({
                 <PostcodeInput
                   value={form.postcode}
                   onChange={(v) => setForm((f) => ({ ...f, postcode: v }))}
-                  placeholder="Postcode"
+                  placeholder="Search or add postcode…"
                   disabled={form.locationType !== 'radius'}
                 />
               </div>

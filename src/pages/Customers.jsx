@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react'
 import { api } from '../api/client.js'
 import { DataTable } from '../components/AdminViews.jsx'
 import PhoneInput from '../components/PhoneInput.jsx'
+import PostcodeInput from '../components/PostcodeInput.jsx'
 import {
   Button,
   ErrorBanner,
@@ -294,11 +295,16 @@ export default function Customers() {
                 />
               </div>
             </label>
-            <Input
-              label="Postcode"
-              value={form.postcode}
-              onChange={(e) => setForm((f) => ({ ...f, postcode: e.target.value }))}
-            />
+            <label className="block text-sm font-semibold text-navy">
+              Postcode
+              <div className="mt-1 font-normal">
+                <PostcodeInput
+                  value={form.postcode}
+                  onChange={(v) => setForm((f) => ({ ...f, postcode: v }))}
+                  placeholder="Search or add postcode…"
+                />
+              </div>
+            </label>
             <Select
               label="Status"
               value={form.status}

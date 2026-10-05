@@ -19,6 +19,7 @@ import {
   Folders,
   Coins,
   SlidersHorizontal,
+  MapPin,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
@@ -60,6 +61,7 @@ const navGroups = [
       { to: '/recent-purchases', label: 'Recent purchases', icon: ShoppingBag },
       { to: '/token-packages', label: 'Token packages', icon: Coins },
       { to: '/token-adjust', label: 'Default Token Adjust', icon: SlidersHorizontal },
+      { to: '/postcodes', label: 'Postcodes', icon: MapPin },
     ],
   },
 ]

@@ -40,7 +40,11 @@ export function AuthProvider({ children }) {
   }, [])
 
   async function login(email, password) {
-    const data = await api.login({ email, password, role: 'STAFF' })
+    const data = await api.login({
+      email: String(email || '').trim().toLowerCase(),
+      password: String(password || ''),
+      role: 'STAFF',
+    })
     if (!isAdmin(data.user)) {
       throw new Error('Admin access only')
     }

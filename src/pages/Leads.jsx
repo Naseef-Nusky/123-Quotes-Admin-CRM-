@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { DataTable, LeadAnswerField } from '../components/AdminViews.jsx'
 import PhoneInput from '../components/PhoneInput.jsx'
+import PostcodeInput from '../components/PostcodeInput.jsx'
 import {
   UnlockTokenTiersForm,
   normalizeUnlockTiersForUi,
@@ -234,11 +235,16 @@ export default function Leads() {
                 />
               </div>
             </label>
-            <Input
-              label="Postcode"
-              value={form.postcode}
-              onChange={(e) => setForm((f) => ({ ...f, postcode: e.target.value }))}
-            />
+            <label className="block text-sm font-semibold text-navy">
+              Postcode
+              <div className="mt-1 font-normal">
+                <PostcodeInput
+                  value={form.postcode}
+                  onChange={(v) => setForm((f) => ({ ...f, postcode: v }))}
+                  placeholder="Search or add postcode…"
+                />
+              </div>
+            </label>
             <Select
               label="Status"
               value={form.status}
