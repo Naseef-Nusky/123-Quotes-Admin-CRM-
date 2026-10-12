@@ -45,6 +45,7 @@ export default function Leads() {
         questionId: d.questionId || null,
         q: d.q || 'Question',
         a: d.a === '—' ? '' : d.a || '',
+        display: d.display || '',
         type: d.type || 'TEXTAREA',
         options: d.options || [],
       })),

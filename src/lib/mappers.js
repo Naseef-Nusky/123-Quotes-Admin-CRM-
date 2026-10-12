@@ -118,24 +118,58 @@ export function mapAdminLead(lead, leadViewLocked = false, maxUnlocksPerLead = 0
     ? `${firstName} ${lastName}`.trim() || 'Lead'
     : 'Lead'
   const answers = lead.request?.answers || []
-  const details = answers.map((a) => ({
-    questionId: a.questionId || a.question?.id,
-    answerId: a.id,
-    q: a.question?.label || 'Question',
-    a: a.value || '',
-    type: a.question?.type || 'TEXT',
-    options: (a.question?.options || []).map((o) => ({
+  function formatAnswer(raw, options = []) {
+    if (raw == null) return ''
+    const resolve = (token) => {
+      const t = String(token ?? '').trim()
+      if (!t) return ''
+      const opt = options.find(
+        (o) =>
+          String(o.id) === t ||
+          String(o.value ?? '').trim() === t ||
+          String(o.label ?? '').trim() === t,
+      )
+      return opt ? String(opt.label || opt.value || t).trim() : t
+    }
+    if (Array.isArray(raw)) return raw.map(resolve).filter(Boolean).join(', ')
+    const s = String(raw).trim()
+    if (!s) return ''
+    if (s.includes(',')) {
+      return s
+        .split(',')
+        .map((p) => resolve(p.trim()))
+        .filter(Boolean)
+        .join(', ')
+    }
+    return resolve(s)
+  }
+  const details = answers.map((a) => {
+    const options = (a.question?.options || []).map((o) => ({
       id: o.id,
       label: o.label,
       value: o.value,
-    })),
-  }))
+    }))
+    const raw = a.value || ''
+    return {
+      questionId: a.questionId || a.question?.id,
+      answerId: a.id,
+      q: a.question?.label || 'Question',
+      a: raw,
+      display: formatAnswer(raw, options),
+      type: a.question?.type || 'TEXT',
+      options,
+    }
+  })
+  // Prefer formatted answers so sidebar/snippets never show option IDs
+  const fromAnswers = details
+    .map((d) => d.display || d.a)
+    .filter(Boolean)
+    .join(' / ')
+  const looksLikeOptionIds = (text) =>
+    /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i.test(String(text || ''))
   const snippet =
-    lead.summary ||
-    details
-      .map((d) => d.a)
-      .filter(Boolean)
-      .join(' / ') ||
+    fromAnswers ||
+    (lead.summary && !looksLikeOptionIds(lead.summary) ? lead.summary : '') ||
     '—'
 
   const locked =
