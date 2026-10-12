@@ -25,22 +25,39 @@ function splitMultiValue(value) {
     .filter(Boolean)
 }
 
+function optionMatches(opt, stored) {
+  const t = String(stored ?? '').trim()
+  if (!t) return false
+  return (
+    String(opt.id || '') === t ||
+    String(opt.value ?? '').trim() === t ||
+    String(opt.label ?? '').trim() === t
+  )
+}
+
+function optionToken(opt) {
+  if (opt?.id) return String(opt.id)
+  const value = String(opt?.value ?? '').trim()
+  if (value) return value
+  return String(opt?.label ?? '').trim()
+}
+
 export function LeadAnswerField({ detail, onChange }) {
   const options = detail.options || []
   const type = detail.type || 'TEXT'
 
   if (type === 'DROPDOWN' && options.length) {
-    const values = new Set(options.map((o) => o.value))
-    const current = values.has(detail.a) ? detail.a : ''
+    const matched = options.find((o) => optionMatches(o, detail.a))
+    const current = matched ? optionToken(matched) : ''
     return (
       <Select label={detail.q} value={current} onChange={(e) => onChange(e.target.value)}>
         <option value="">Select…</option>
         {options.map((opt) => (
-          <option key={opt.id || opt.value} value={opt.value}>
+          <option key={opt.id || opt.value} value={optionToken(opt)}>
             {opt.label}
           </option>
         ))}
-        {detail.a && !values.has(detail.a) ? (
+        {detail.a && !matched ? (
           <option value={detail.a}>{detail.a} (current)</option>
         ) : null}
       </Select>
@@ -53,25 +70,28 @@ export function LeadAnswerField({ detail, onChange }) {
       <fieldset className="space-y-2">
         <legend className="text-sm font-semibold text-navy">{detail.q}</legend>
         <div className="space-y-2">
-          {options.map((opt) => (
-            <label
-              key={opt.id || opt.value}
-              className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
-                detail.a === opt.value
-                  ? 'border-blue bg-blue/5 text-navy'
-                  : 'border-slate-200 bg-white text-slate-600'
-              }`}
-            >
-              <input
-                type={control}
-                name={control === 'radio' ? `lead-q-${detail.questionId || detail.q}` : undefined}
-                className="size-4 accent-blue"
-                checked={detail.a === opt.value}
-                onChange={() => onChange(opt.value)}
-              />
-              {opt.label}
-            </label>
-          ))}
+          {options.map((opt) => {
+            const selected = optionMatches(opt, detail.a)
+            return (
+              <label
+                key={opt.id || opt.value}
+                className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+                  selected
+                    ? 'border-blue bg-blue/5 text-navy'
+                    : 'border-slate-200 bg-white text-slate-600'
+                }`}
+              >
+                <input
+                  type={control}
+                  name={control === 'radio' ? `lead-q-${detail.questionId || detail.q}` : undefined}
+                  className="size-4 accent-blue"
+                  checked={selected}
+                  onChange={() => onChange(optionToken(opt))}
+                />
+                {opt.label}
+              </label>
+            )
+          })}
         </div>
       </fieldset>
     )
@@ -85,13 +105,18 @@ export function LeadAnswerField({ detail, onChange }) {
         <legend className="text-sm font-semibold text-navy">{detail.q}</legend>
         <div className="space-y-2">
           {options.map((opt) => {
-            const checked =
-              selected.includes(opt.value) || (opt.label && selected.includes(opt.label))
+            const token = optionToken(opt)
+            const checked = selected.some((v) => optionMatches(opt, v))
             const applyToggle = () => {
-              const token = opt.value
               const next = checked
-                ? selected.filter((v) => v !== opt.value && v !== opt.label)
-                : [...selected.filter((v) => v !== opt.value && v !== opt.label), token]
+                ? selected.filter(
+                    (v) =>
+                      v !== token &&
+                      v !== String(opt.id || '') &&
+                      v !== String(opt.value ?? '') &&
+                      v !== String(opt.label ?? ''),
+                  )
+                : [...selected.filter((v) => !optionMatches(opt, v)), token]
               onChange(next.join(', '))
             }
             return (
@@ -236,6 +261,7 @@ export function LeadSplitView({
         questionId: d.questionId || null,
         q: d.q || 'Question',
         a: d.a === '—' ? '' : d.a || '',
+        display: d.display || '',
         type: d.type || 'TEXTAREA',
         options: d.options || [],
       })),
@@ -449,7 +475,9 @@ export function LeadSplitView({
                     {(selected.details || []).map((d, idx) => (
                       <li key={d.questionId || `${d.q}-${idx}`}>
                         <span className="text-slate-600">• {d.q}</span>{' '}
-                        {d.a ? <span className="font-bold text-navy">{d.a}</span> : null}
+                        {d.display || d.a ? (
+                          <span className="font-bold text-navy">{d.display || d.a}</span>
+                        ) : null}
                       </li>
                     ))}
                   </ul>
