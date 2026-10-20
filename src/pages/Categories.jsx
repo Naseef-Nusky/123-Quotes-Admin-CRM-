@@ -223,7 +223,7 @@ export default function Categories() {
                   ) : null}
                 </td>
                 <td className="px-2.5 py-2.5 text-slate-600">{c.slug}</td>
-                <td className="px-2.5 py-2.5">{c.sortOrder ?? 0}</td>
+                <td className="whitespace-nowrap px-2.5 py-2.5">{c.sortOrder ?? 0}</td>
                 <td className="px-2.5 py-2.5">
                   <span
                     className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${

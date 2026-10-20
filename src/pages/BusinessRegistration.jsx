@@ -151,7 +151,7 @@ export default function BusinessRegistration() {
             {visibleRegs.map((r) => (
               <tr key={r.id} className="border-t border-slate-100">
                 <td className="px-2.5 py-2.5 font-medium text-navy">{r.name}</td>
-                <td className="px-2.5 py-2.5">{r.contact}</td>
+                <td className="whitespace-nowrap px-2.5 py-2.5">{r.contact}</td>
                 <td className="px-2.5 py-2.5">{r.email}</td>
                 <td className="px-2.5 py-2.5">{r.service}</td>
                 <td className="px-2.5 py-2.5">

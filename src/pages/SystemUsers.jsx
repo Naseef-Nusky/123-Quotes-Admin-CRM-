@@ -302,7 +302,7 @@ export default function SystemUsers() {
               <tbody>
                 {filtered.map((u, idx) => (
                   <tr key={u.id} className="border-t border-slate-100 hover:bg-slate-50/80">
-                    <td className="px-2.5 py-2.5 text-navy">{idx + 1}</td>
+                    <td className="whitespace-nowrap px-2.5 py-2.5 text-navy">{idx + 1}</td>
                     <td className="px-2.5 py-2.5 font-medium text-navy">{displayName(u)}</td>
                     <td className="px-2.5 py-2.5 text-navy">{u.email}</td>
                     <td className="px-2.5 py-2.5">

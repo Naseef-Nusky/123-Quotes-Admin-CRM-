@@ -13,7 +13,7 @@ import {
   formatIntlPhone,
   parseIntlPhone,
 } from '../data/countryDialCodes.js'
-import { ActionIconButton, Button, Card, DeleteAction, DetailGrid, EditAction, Input, Loading, Modal, RowActions, Select, Textarea } from './ui.jsx'
+import { ActionIconButton, Button, Card, DeleteAction, DetailGrid, EditAction, Input, Loading, Modal, RowActions, Select, Textarea, isSingleLineColumn } from './ui.jsx'
 
 const LEAD_STATUSES = ['OPEN', 'MATCHED', 'PARTIALLY_UNLOCKED', 'CLOSED', 'CANCELLED']
 
@@ -793,11 +793,7 @@ export function DataTable({ title, columns, rows, searchKeys = [], filters = nul
                     <td
                       key={c.key}
                       className={`px-2.5 py-2.5 text-navy ${
-                        c.key === 'action' || c.key === 'actions'
-                          ? 'whitespace-nowrap'
-                          : /date|created|joined/i.test(`${c.key} ${c.label || ''}`)
-                            ? 'whitespace-nowrap'
-                            : ''
+                        isSingleLineColumn(c) ? 'whitespace-nowrap [overflow-wrap:normal]' : ''
                       }`}
                     >
                       {c.render ? c.render(row, idx) : row[c.key]}

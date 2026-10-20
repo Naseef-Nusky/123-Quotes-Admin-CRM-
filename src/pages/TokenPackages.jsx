@@ -253,11 +253,11 @@ export default function TokenPackages() {
                     <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">{pkg.description}</p>
                   ) : null}
                 </td>
-                <td className="px-2.5 py-2.5 font-semibold text-navy">{pkg.tokens}</td>
-                <td className="px-2.5 py-2.5 text-slate-700">
+                <td className="whitespace-nowrap px-2.5 py-2.5 font-semibold text-navy">{pkg.tokens}</td>
+                <td className="whitespace-nowrap px-2.5 py-2.5 text-slate-700">
                   {formatMoney(pkg.priceCents, pkg.currency)}
                 </td>
-                <td className="px-2.5 py-2.5">{pkg.sortOrder ?? 0}</td>
+                <td className="whitespace-nowrap px-2.5 py-2.5">{pkg.sortOrder ?? 0}</td>
                 <td className="px-2.5 py-2.5">
                   <span
                     className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${

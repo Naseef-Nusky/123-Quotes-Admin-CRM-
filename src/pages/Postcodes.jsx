@@ -218,7 +218,7 @@ export default function Postcodes() {
           <tbody>
             {visibleRows.map((row) => (
               <tr key={row.id} className="border-t border-slate-100">
-                <td className="px-2.5 py-2.5 font-semibold text-navy">{row.outcode}</td>
+                <td className="whitespace-nowrap px-2.5 py-2.5 font-semibold text-navy">{row.outcode}</td>
                 <td className="px-2.5 py-2.5 text-slate-700">{row.town || '—'}</td>
                 <td className="px-2.5 py-2.5 text-slate-600">{row.region || '—'}</td>
                 <td className="px-2.5 py-2.5 text-slate-600">{row.country || '—'}</td>

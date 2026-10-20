@@ -257,6 +257,25 @@ export function Modal({ open, title, onClose, children, wide }) {
   )
 }
 
+/**
+ * Columns whose values must stay on a single line in admin tables — ID
+ * numbers (`#`, `id`, reference), phone/contact numbers, postcodes, dates
+ * and numeric values (tokens, amounts, counts, sort order). A column can
+ * force/opt out with `nowrap: true/false`.
+ */
+export function isSingleLineColumn(col) {
+  if (!col) return false
+  if (col.nowrap === false) return false
+  if (col.nowrap) return true
+  const key = String(col.key || '')
+  const label = String(col.label || '')
+  if (key === 'action' || key === 'actions' || key === '#') return true
+  if (/id/i.test(key) || /\bid\b|#/i.test(label)) return true
+  return /date|created|joined|phone|contact|reference|postcode|token|unlock|matched|amount|price|sort|count|number|\bno\.?\b/i.test(
+    `${key} ${label}`,
+  )
+}
+
 export function Table({ columns, rows, empty = 'No records found.', rowKey = 'id' }) {
   if (!rows?.length) {
     return (
@@ -289,11 +308,7 @@ export function Table({ columns, rows, empty = 'No records found.', rowKey = 'id
                   <td
                     key={col.key}
                     className={`px-2.5 py-2.5 align-middle ${
-                      col.key === 'action' || col.key === 'actions'
-                        ? 'whitespace-nowrap'
-                        : /date|created|joined/i.test(`${col.key} ${col.label || ''}`)
-                          ? 'whitespace-nowrap'
-                          : ''
+                      isSingleLineColumn(col) ? 'whitespace-nowrap [overflow-wrap:normal]' : ''
                     }`}
                   >
                     {col.render ? col.render(row) : row[col.key]}
