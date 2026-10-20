@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react'
 import { api } from '../api/client.js'
 import { mapBusinessApplication } from '../lib/mappers.js'
 import BusinessAddWizard from '../components/BusinessAddWizard.jsx'
+import DeleteAllButton from '../components/DeleteAllButton.jsx'
 import { Button, Card, ErrorBanner, Loading, Modal, PageHeader } from '../components/ui.jsx'
 
 export default function BusinessRegistration() {
@@ -84,18 +85,30 @@ export default function BusinessRegistration() {
         title="Business Registration"
         subtitle="Review every business application. Additional signups for existing emails appear here for approval too."
         actions={
-          <Button onClick={openAdd}>
-            <Plus className="mr-1.5 size-4" />
-            Add business
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={openAdd}>
+              <Plus className="mr-1.5 size-4" />
+              Add business
+            </Button>
+            <DeleteAllButton
+              label="Delete all applications"
+              confirmText="Permanently delete ALL business applications from the database?\n\nType DELETE to confirm."
+              onConfirm={async () => {
+                const data = await api.deleteAllBusinessApplications()
+                setFlash(`Deleted ${data.count ?? 0} application(s).`)
+                await load()
+              }}
+            />
+          </div>
         }
       />
       {flash ? <p className="mb-3 text-sm font-semibold text-ok">{flash}</p> : null}
       <ErrorBanner message={error} />
       {loading ? <Loading className="mb-3 py-6" /> : null}
       <Card className="overflow-hidden p-0">
+        <div className="max-h-[70vh] overflow-auto">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-500">
+          <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
             <tr>
               <th className="px-4 py-3">Business</th>
               <th className="px-4 py-3">Contact</th>
@@ -147,6 +160,7 @@ export default function BusinessRegistration() {
             ) : null}
           </tbody>
         </table>
+        </div>
       </Card>
 
       <BusinessAddWizard

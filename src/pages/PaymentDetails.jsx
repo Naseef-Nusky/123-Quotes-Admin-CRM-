@@ -1,7 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../api/client.js'
 import { DataTable } from '../components/AdminViews.jsx'
-import { Button, ErrorBanner, Loading, Modal, StatusBadge, formatDate, formatMoney } from '../components/ui.jsx'
+import DeleteAllButton from '../components/DeleteAllButton.jsx'
+import {
+  Button,
+  ErrorBanner,
+  Loading,
+  Modal,
+  PageHeader,
+  StatusBadge,
+  formatDate,
+  formatMoney,
+} from '../components/ui.jsx'
 
 function displayName(user) {
   if (!user) return '—'
@@ -18,19 +28,21 @@ function displayPhone(user) {
 }
 
 function mapApiPayment(p) {
-  const tokens = p.meta?.tokens ?? p.package?.tokens
+  const tokens = p.meta?.tokens ?? p.package?.tokens ?? p.meta?.points
   const mocked = Boolean(p.meta?.mocked)
+  const legacy = p.provider === 'legacy-import'
+  const name = displayName(p.user)
   return {
     id: p.id,
-    name: displayName(p.user),
-    email: p.user?.email || '—',
+    name: name !== '—' ? name : p.legacyUserId ? `Legacy user #${p.legacyUserId}` : '—',
+    email: p.user?.email || (p.legacyUserId ? `(no email · legacy #${p.legacyUserId})` : '—'),
     phone: displayPhone(p.user),
-    package: p.package?.name || (p.subscriptionId ? 'Subscription' : 'Payment'),
+    package: p.package?.name || (p.subscriptionId ? 'Subscription' : legacy ? 'Legacy order' : 'Payment'),
     tokens: tokens ?? '—',
     amount: formatMoney(p.amountCents, p.currency || 'GBP'),
     amountRaw: p.amountCents,
     currency: p.currency || 'GBP',
-    method: mocked ? 'Square (test/mock)' : 'Square',
+    method: mocked ? 'Square (test/mock)' : legacy ? 'Legacy import' : 'Square',
     mocked,
     status: p.status,
     date: formatDate(p.createdAt),
@@ -39,7 +51,7 @@ function mapApiPayment(p) {
     providerPaymentId: p.providerPaymentId || '—',
     subscriptionId: p.subscriptionId || null,
     packageName: p.package?.name || null,
-    userRole: p.user?.role || '—',
+    userRole: p.user?.role || (legacy ? 'LEGACY' : '—'),
   }
 }
 
@@ -110,6 +122,21 @@ export default function PaymentDetails({ variant = 'recent' }) {
 
   return (
     <div>
+      <PageHeader
+        title={isPurchases ? 'Recent purchases' : 'Square Payments'}
+        subtitle="Delete all permanently removes every payment record from the database."
+        actions={
+          <DeleteAllButton
+            label="Delete all payments"
+            confirmText="Permanently delete ALL payments from the database?\n\nType DELETE to confirm."
+            onConfirm={async () => {
+              const data = await api.deleteAllPayments()
+              window.alert(`Deleted ${data.count ?? 0} payment(s).`)
+              setRows([])
+            }}
+          />
+        }
+      />
       <ErrorBanner message={error} />
       {loading ? <Loading className="mb-3 py-6" /> : <p className="mb-2 text-sm text-slate-500">{subtitle}</p>}
       <DataTable

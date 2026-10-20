@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../api/client.js'
-import { useAuth } from '../context/AuthContext.jsx'
+import { useAuth } from '../context/auth.js'
+import DeleteAllButton from '../components/DeleteAllButton.jsx'
 import {
   Button,
   ErrorBanner,
@@ -233,6 +234,17 @@ export default function SystemUsers() {
               Refresh
             </Button>
             {isSuper ? <Button onClick={openCreate}>Add system user</Button> : null}
+            {isSuper ? (
+              <DeleteAllButton
+                label="Delete all other admins"
+                confirmText="Permanently delete ALL other system users (keeps your account)?\n\nType DELETE to confirm."
+                onConfirm={async () => {
+                  const data = await api.deleteAllSystemUsers()
+                  setFlash(`Deleted ${data.count ?? 0} system user(s).`)
+                  await load()
+                }}
+              />
+            ) : null}
           </div>
         }
       />
@@ -269,9 +281,9 @@ export default function SystemUsers() {
         <Loading />
       ) : (
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="overflow-x-auto">
+          <div className="max-h-[70vh] overflow-auto">
             <table className="w-full min-w-[820px] text-left text-sm">
-              <thead className="bg-slate-50 text-slate-500">
+              <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
                 <tr>
                   <th className="px-4 py-3 font-semibold">#</th>
                   <th className="px-4 py-3 font-semibold">Name</th>

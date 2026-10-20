@@ -1,13 +1,37 @@
 import { LeadSplitView } from '../components/AdminViews.jsx'
-import { ErrorBanner } from '../components/ui.jsx'
+import DeleteAllButton from '../components/DeleteAllButton.jsx'
+import { ErrorBanner, PageHeader } from '../components/ui.jsx'
 import { useAdminLeads } from '../hooks/useAdminLeads.js'
 
 export default function LockedLeads() {
-  const { leads, loading, error, deleteLead, updateLead, setLeadLock, leadViewLocked, unlockTiers } =
-    useAdminLeads()
+  const {
+    leads,
+    loading,
+    error,
+    deleteLead,
+    deleteAllLeads,
+    updateLead,
+    setLeadLock,
+    leadViewLocked,
+    unlockTiers,
+  } = useAdminLeads()
 
   return (
     <div>
+      <PageHeader
+        title="Locked Leads"
+        subtitle="Delete all permanently removes every lead from the database."
+        actions={
+          <DeleteAllButton
+            label="Delete all leads"
+            confirmText="Permanently delete ALL leads from the database?\n\nType DELETE to confirm."
+            onConfirm={async () => {
+              const data = await deleteAllLeads()
+              window.alert(`Deleted ${data.count ?? 0} lead request(s).`)
+            }}
+          />
+        }
+      />
       <ErrorBanner message={error} />
       {!loading && !leadViewLocked ? (
         <p className="mb-3 rounded-lg border border-blue/20 bg-blue/5 px-3 py-2 text-sm text-slate-600">

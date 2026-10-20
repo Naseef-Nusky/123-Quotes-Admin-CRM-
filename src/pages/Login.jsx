@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { Eye, EyeOff, LockKeyhole } from 'lucide-react'
-import { useAuth } from '../context/AuthContext.jsx'
+import { useAuth } from '../context/auth.js'
 import { Button } from '../components/ui.jsx'
 
 const DEMO_ACCOUNTS = [

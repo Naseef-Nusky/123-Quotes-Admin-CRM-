@@ -23,7 +23,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
-import { useAuth } from '../context/AuthContext.jsx'
+import { useAuth } from '../context/auth.js'
 import NotificationBell from './NotificationBell.jsx'
 
 const navGroups = [

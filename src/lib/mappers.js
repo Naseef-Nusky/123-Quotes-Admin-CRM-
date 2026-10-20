@@ -112,11 +112,20 @@ export function costFromUnlockTiers(unlockedCount, tiers, fallbackCost = 1) {
 export function mapAdminLead(lead, leadViewLocked = false, maxUnlocksPerLead = 0, unlockTiers = null) {
   const customer = lead.request?.customer
   const user = customer?.user
-  const firstName = customer?.firstName || ''
-  const lastName = customer?.lastName || ''
-  const name = customer
-    ? `${firstName} ${lastName}`.trim() || 'Lead'
-    : 'Lead'
+  const contactName = String(lead.request?.contactName || '').trim()
+  const contactEmail = String(lead.request?.contactEmail || user?.email || '').trim()
+  const contactPhone = String(lead.request?.contactPhone || customer?.phone || '').trim()
+  const nameFromContact = contactName
+  const firstName = customer?.firstName || (nameFromContact ? nameFromContact.split(/\s+/)[0] : '') || ''
+  const lastName =
+    customer?.lastName ||
+    (nameFromContact ? nameFromContact.split(/\s+/).slice(1).join(' ') : '') ||
+    ''
+  const name =
+    nameFromContact ||
+    (customer ? `${firstName} ${lastName}`.trim() : '') ||
+    (contactEmail ? contactEmail.split('@')[0] : '') ||
+    'Lead'
   const answers = lead.request?.answers || []
   function formatAnswer(raw, options = []) {
     if (raw == null) return ''
@@ -216,8 +225,8 @@ export function mapAdminLead(lead, leadViewLocked = false, maxUnlocksPerLead = 0
       maxUnlocks > 0
         ? `${unlockedCount}/${maxUnlocks} unlocks · ${matchedCount} matched`
         : `${unlockedCount} unlocks · ${matchedCount} matched`,
-    phone: customer?.phone || '—',
-    email: user?.email || '—',
+    phone: contactPhone || customer?.phone || '—',
+    email: contactEmail || user?.email || '—',
     locked,
     date: formatDateTime(lead.createdAt),
     status: lead.status,

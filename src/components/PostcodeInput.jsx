@@ -1,31 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, Plus, X } from 'lucide-react'
 import { api } from '../api/client.js'
+import { getCachedPostcodes, loadPostcodes } from '../lib/postcodeCache.js'
 
-let cachedPostcodes = null
-let loadPromise = null
-
-/** Call after CRM create/update/delete so dropdowns pick up changes. */
-export function clearPostcodeCache() {
-  cachedPostcodes = null
-  loadPromise = null
-}
-
-function loadPostcodes() {
-  if (cachedPostcodes) return Promise.resolve(cachedPostcodes)
-  if (!loadPromise) {
-    loadPromise = api
-      .listPostcodes()
-      .then((d) => {
-        cachedPostcodes = d.results || []
-        return cachedPostcodes
-      })
-      .catch((err) => {
-        loadPromise = null
-        throw err
-      })
-  }
-  return loadPromise
+function fetchPostcodes() {
+  return loadPostcodes(() => api.listPostcodes())
 }
 
 function optionLabel(row) {
@@ -51,7 +30,7 @@ export default function PostcodeInput({
 }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
-  const [options, setOptions] = useState(cachedPostcodes || [])
+  const [options, setOptions] = useState(getCachedPostcodes() || [])
   const [loading, setLoading] = useState(false)
   const [highlight, setHighlight] = useState(0)
   const wrapRef = useRef(null)
@@ -95,7 +74,7 @@ export default function PostcodeInput({
   useEffect(() => {
     if (options.length) return
     setLoading(true)
-    loadPostcodes()
+    fetchPostcodes()
       .then((list) => setOptions(list))
       .catch(() => setOptions([]))
       .finally(() => setLoading(false))

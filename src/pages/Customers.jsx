@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { api } from '../api/client.js'
 import { DataTable } from '../components/AdminViews.jsx'
+import DeleteAllButton from '../components/DeleteAllButton.jsx'
 import PhoneInput from '../components/PhoneInput.jsx'
 import PostcodeInput from '../components/PostcodeInput.jsx'
 import {
@@ -247,6 +248,15 @@ export default function Customers() {
               <Plus className="mr-1.5 size-4" />
               Add customer
             </Button>
+            <DeleteAllButton
+              label="Delete all customers"
+              confirmText="Permanently delete ALL customers from the database?\n\nType DELETE to confirm."
+              onConfirm={async () => {
+                const data = await api.deleteAllCustomers()
+                setFlash(`Deleted ${data.count ?? 0} customer(s).`)
+                await load()
+              }}
+            />
           </div>
         }
       />

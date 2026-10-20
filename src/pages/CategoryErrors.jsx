@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api } from '../api/client.js'
+import DeleteAllButton from '../components/DeleteAllButton.jsx'
 import { Button, Card, ErrorBanner, Loading, PageHeader } from '../components/ui.jsx'
 
 const SETTING_KEY = 'category_errors'
@@ -60,13 +61,23 @@ export default function CategoryErrors() {
       <PageHeader
         title="Category Errors"
         subtitle="Fix incorrect categories submitted with leads."
+        actions={
+          <DeleteAllButton
+            label="Delete all errors"
+            confirmText="Permanently clear ALL category errors?\n\nType DELETE to confirm."
+            onConfirm={async () => {
+              await api.deleteAllCategoryErrors()
+              setErrors([])
+            }}
+          />
+        }
       />
       <ErrorBanner message={error} />
       {loading ? <Loading className="mb-3 py-6" /> : null}
       <Card className="overflow-hidden p-0">
-        <div className="overflow-x-auto">
+        <div className="max-h-[70vh] overflow-auto">
           <table className="w-full min-w-[800px] text-left text-sm">
-            <thead className="bg-slate-50 text-slate-500">
+            <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
               <tr>
                 <th className="px-4 py-3">Category</th>
                 <th className="px-4 py-3">User</th>

@@ -1,7 +1,6 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { api } from '../api/client.js'
-
-const AuthContext = createContext(null)
+import { AuthContext } from './auth.js'
 
 function isAdmin(user) {
   return user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'
@@ -63,8 +62,4 @@ export function AuthProvider({ children }) {
       {children}
     </AuthContext.Provider>
   )
-}
-
-export function useAuth() {
-  return useContext(AuthContext)
 }

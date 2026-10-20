@@ -75,7 +75,7 @@ export function LeadAnswerField({ detail, onChange }) {
             return (
               <label
                 key={opt.id || opt.value}
-                className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+                className={`flex w-full cursor-pointer items-center gap-2 rounded-lg border px-4 py-3 text-sm ${
                   selected
                     ? 'border-blue bg-blue/5 text-navy'
                     : 'border-slate-200 bg-white text-slate-600'
@@ -84,11 +84,11 @@ export function LeadAnswerField({ detail, onChange }) {
                 <input
                   type={control}
                   name={control === 'radio' ? `lead-q-${detail.questionId || detail.q}` : undefined}
-                  className="size-4 accent-blue"
+                  className="size-4 shrink-0 accent-blue"
                   checked={selected}
                   onChange={() => onChange(optionToken(opt))}
                 />
-                {opt.label}
+                <span className="min-w-0 flex-1 break-words">{opt.label}</span>
               </label>
             )
           })}
@@ -122,13 +122,13 @@ export function LeadAnswerField({ detail, onChange }) {
             return (
               <label
                 key={opt.id || opt.value}
-                className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+                className={`flex w-full cursor-pointer items-center gap-2 rounded-lg border px-4 py-3 text-sm ${
                   checked ? 'border-blue bg-blue/5 text-navy' : 'border-slate-200 bg-white text-slate-600'
                 }`}
               >
                 <input
                   type={control}
-                  className="size-4 accent-blue"
+                  className="size-4 shrink-0 accent-blue"
                   checked={checked}
                   onChange={control === 'checkbox' ? applyToggle : undefined}
                   onClick={
@@ -140,7 +140,7 @@ export function LeadAnswerField({ detail, onChange }) {
                       : undefined
                   }
                 />
-                {opt.label}
+                <span className="min-w-0 flex-1 break-words">{opt.label}</span>
               </label>
             )
           })}
@@ -352,9 +352,9 @@ export function LeadSplitView({
     <div>
       <h1 className="mb-4 text-2xl font-bold text-navy">{title}</h1>
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex min-h-[70vh] flex-col lg:flex-row">
-          <aside className="max-h-[70vh] w-full overflow-y-auto border-b border-slate-200 lg:max-h-none lg:w-[360px] lg:border-b-0 lg:border-r">
-            <div className="sticky top-0 border-b border-slate-200 bg-white p-3">
+        <div className="flex h-[calc(100vh-12rem)] min-h-[520px] flex-col lg:flex-row">
+          <aside className="flex max-h-[40vh] w-full flex-col border-b border-slate-200 lg:h-full lg:max-h-none lg:w-[360px] lg:border-b-0 lg:border-r">
+            <div className="shrink-0 border-b border-slate-200 bg-white p-3">
               <input
                 className="w-full rounded-md border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue focus:ring-2 focus:ring-blue/20"
                 placeholder={searchPlaceholder}
@@ -362,6 +362,7 @@ export function LeadSplitView({
                 onChange={(e) => setQ(e.target.value)}
               />
             </div>
+            <div className="min-h-0 flex-1 overflow-y-auto">
             {loading ? <Loading className="py-8" /> : null}
             {!loading
               ? list.map((lead) => (
@@ -399,9 +400,10 @@ export function LeadSplitView({
             {!loading && !list.length ? (
               <p className="p-4 text-sm text-slate-500">{emptyMessage || defaultEmpty}</p>
             ) : null}
+            </div>
           </aside>
 
-          <div className="flex-1 p-5 sm:p-7">
+          <div className="min-h-0 flex-1 overflow-y-auto p-5 sm:p-7">
             {selected ? (
               <>
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -646,16 +648,8 @@ export function LeadSplitView({
   )
 }
 
-export function DataTable({
-  title,
-  columns,
-  rows,
-  searchKeys = [],
-  pageSizeOptions = [10, 25, 50],
-}) {
+export function DataTable({ title, columns, rows, searchKeys = [] }) {
   const [q, setQ] = useState('')
-  const [pageSize, setPageSize] = useState(pageSizeOptions[0])
-  const [page, setPage] = useState(1)
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase()
@@ -666,50 +660,28 @@ export function DataTable({
   }, [rows, q, searchKeys])
 
   const total = filtered.length
-  const pages = Math.max(1, Math.ceil(total / pageSize))
-  const current = Math.min(page, pages)
-  const start = (current - 1) * pageSize
-  const slice = filtered.slice(start, start + pageSize)
 
   return (
     <div>
       <h1 className="mb-4 text-2xl font-bold text-navy">{title}</h1>
       <Card className="overflow-hidden p-0">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
-          <label className="text-sm text-slate-600">
-            Show{' '}
-            <select
-              className="rounded border border-slate-200 px-2 py-1"
-              value={pageSize}
-              onChange={(e) => {
-                setPageSize(Number(e.target.value))
-                setPage(1)
-              }}
-            >
-              {pageSizeOptions.map((n) => (
-                <option key={n} value={n}>
-                  {n}
-                </option>
-              ))}
-            </select>{' '}
-            entries
-          </label>
+          <p className="text-sm text-slate-600">
+            {total} {total === 1 ? 'entry' : 'entries'}
+          </p>
           <label className="text-sm text-slate-600">
             Search:{' '}
             <input
               className="ml-1 rounded-md border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-blue"
               value={q}
-              onChange={(e) => {
-                setQ(e.target.value)
-                setPage(1)
-              }}
+              onChange={(e) => setQ(e.target.value)}
             />
           </label>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="max-h-[70vh] overflow-auto">
           <table className="w-full min-w-[720px] text-left text-sm">
-            <thead className="bg-slate-50 text-slate-500">
+            <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
               <tr>
                 {columns.map((c) => (
                   <th key={c.key} className="px-4 py-3 font-semibold">
@@ -719,16 +691,16 @@ export function DataTable({
               </tr>
             </thead>
             <tbody>
-              {slice.map((row, idx) => (
+              {filtered.map((row, idx) => (
                 <tr key={row.id || idx} className="border-t border-slate-100 hover:bg-slate-50/80">
                   {columns.map((c) => (
                     <td key={c.key} className="px-4 py-3 text-navy">
-                      {c.render ? c.render(row, start + idx) : row[c.key]}
+                      {c.render ? c.render(row, idx) : row[c.key]}
                     </td>
                   ))}
                 </tr>
               ))}
-              {!slice.length ? (
+              {!filtered.length ? (
                 <tr>
                   <td colSpan={columns.length} className="px-4 py-8 text-center text-slate-500">
                     No entries found.
@@ -737,45 +709,6 @@ export function DataTable({
               ) : null}
             </tbody>
           </table>
-        </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-4 py-3 text-sm text-slate-600">
-          <p>
-            Showing {total ? start + 1 : 0} to {Math.min(start + pageSize, total)} of {total} entries
-          </p>
-          <div className="flex flex-wrap gap-1">
-            <button
-              type="button"
-              className="rounded border border-slate-200 px-2 py-1 disabled:opacity-40"
-              disabled={current <= 1}
-              onClick={() => setPage((p) => p - 1)}
-            >
-              Previous
-            </button>
-            {Array.from({ length: Math.min(pages, 6) }).map((_, i) => {
-              const n = i + 1
-              return (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setPage(n)}
-                  className={`rounded border px-2.5 py-1 ${
-                    current === n ? 'border-blue bg-blue text-white' : 'border-slate-200'
-                  }`}
-                >
-                  {n}
-                </button>
-              )
-            })}
-            <button
-              type="button"
-              className="rounded border border-slate-200 px-2 py-1 disabled:opacity-40"
-              disabled={current >= pages}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Next
-            </button>
-          </div>
         </div>
       </Card>
     </div>

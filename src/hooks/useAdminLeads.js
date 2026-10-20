@@ -29,7 +29,17 @@ export function useAdminLeads() {
       setLeadViewLocked(locked)
       setMaxUnlocksPerLead(maxUnlocks)
       setUnlockTiers(Array.isArray(tiers) ? tiers : [{ afterViews: 0, tokenCost: 1 }])
-      setLeads((leadsRes.leads || []).map((l) => mapAdminLead(l, locked, maxUnlocks, tiers)))
+      const mapped = (leadsRes.leads || []).map((l) =>
+        mapAdminLead(l, locked, maxUnlocks, tiers),
+      )
+      // Show leads that have email/phone first (imported contacts), then newest
+      mapped.sort((a, b) => {
+        const aHas = a.email && a.email !== '—' ? 1 : 0
+        const bHas = b.email && b.email !== '—' ? 1 : 0
+        if (aHas !== bHas) return bHas - aHas
+        return (b.createdAtMs || 0) - (a.createdAtMs || 0)
+      })
+      setLeads(mapped)
     } catch (err) {
       setError(err.message || 'Failed to load leads')
       setLeads([])
@@ -45,6 +55,12 @@ export function useAdminLeads() {
   async function deleteLead(id) {
     await api.deleteLead(id)
     setLeads((rows) => rows.filter((r) => r.id !== id))
+  }
+
+  async function deleteAllLeads() {
+    const data = await api.deleteAllLeads()
+    setLeads([])
+    return data
   }
 
   async function updateLead(id, body) {
@@ -71,6 +87,7 @@ export function useAdminLeads() {
     error,
     reload,
     deleteLead,
+    deleteAllLeads,
     updateLead,
     leadViewLocked,
     setLeadLock,

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { api } from '../api/client.js'
+import DeleteAllButton from '../components/DeleteAllButton.jsx'
 import {
   Button,
   ErrorBanner,
@@ -144,10 +145,23 @@ export default function Categories() {
         title="Categories"
         subtitle="Manage parent categories that group services on the public site."
         actions={
-          <Button onClick={openAdd}>
-            <Plus className="mr-1.5 size-4" />
-            Add category
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={openAdd}>
+              <Plus className="mr-1.5 size-4" />
+              Add category
+            </Button>
+            <DeleteAllButton
+              label="Delete all categories"
+              confirmText="Permanently delete ALL categories, services, and linked leads?\n\nType DELETE to confirm."
+              onConfirm={async () => {
+                const data = await api.deleteAllCategories()
+                setFlash(
+                  `Deleted ${data.count ?? 0} categor(ies), ${data.servicesDeleted ?? 0} service(s), ${data.requestsDeleted ?? 0} request(s).`,
+                )
+                await load()
+              }}
+            />
+          </div>
         }
       />
 
@@ -165,9 +179,9 @@ export default function Categories() {
 
       {loading ? <Loading className="mb-3 py-6" /> : null}
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="max-h-[70vh] overflow-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-500">
+          <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
             <tr>
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Slug</th>

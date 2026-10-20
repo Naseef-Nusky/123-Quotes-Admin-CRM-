@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FolderTree, HelpCircle, Plus, Search } from 'lucide-react'
 import { api } from '../api/client.js'
+import DeleteAllButton from '../components/DeleteAllButton.jsx'
 import {
   Button,
   Card,
@@ -398,10 +399,23 @@ export default function ProMgmt() {
         title="Pro.Mgmt"
         subtitle="Full control: create, edit, and delete services and questionnaire questions."
         actions={
-          <Button onClick={openAddCategory} disabled={saving || loading}>
-            <Plus className="mr-1.5 size-4" />
-            Add service
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={openAddCategory} disabled={saving || loading}>
+              <Plus className="mr-1.5 size-4" />
+              Add service
+            </Button>
+            <DeleteAllButton
+              label="Delete all services"
+              confirmText="Permanently delete ALL categories, services, questions, and linked leads?\n\nType DELETE to confirm."
+              onConfirm={async () => {
+                const data = await api.deleteAllCategories()
+                setFlash(
+                  `Deleted ${data.servicesDeleted ?? 0} service(s) and ${data.requestsDeleted ?? 0} request(s).`,
+                )
+                await load()
+              }}
+            />
+          </div>
         }
       />
 
@@ -421,12 +435,12 @@ export default function ProMgmt() {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
-        <aside className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-100 px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-500">
+      <div className="grid gap-4 lg:h-[calc(100vh-14rem)] lg:min-h-[520px] lg:grid-cols-[280px_1fr]">
+        <aside className="flex max-h-[40vh] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm lg:max-h-none lg:h-full">
+          <div className="shrink-0 border-b border-slate-100 px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-500">
             Services ({filtered.length})
           </div>
-          <div className="max-h-[70vh] overflow-y-auto">
+          <div className="min-h-0 flex-1 overflow-y-auto">
             {filtered.map((service) => (
               <button
                 key={service.id}
@@ -451,7 +465,7 @@ export default function ProMgmt() {
           </div>
         </aside>
 
-        <Card className="!p-0 overflow-hidden">
+        <Card className="!p-0 min-h-0 overflow-y-auto">
           {selected ? (
             <div>
               <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-5 py-4">
@@ -597,6 +611,7 @@ export default function ProMgmt() {
         open={!!qModal}
         title={qModal?.mode === 'edit' ? 'Edit question' : 'Add question'}
         onClose={() => setQModal(null)}
+        wide
       >
         {qModal ? (
           <form className="space-y-3" onSubmit={saveQuestion}>
@@ -644,15 +659,19 @@ export default function ProMgmt() {
                   </Button>
                 </div>
                 {(qModal.answers || []).map((row, idx) => (
-                  <div key={idx} className="flex gap-2">
-                    <Input
-                      value={row.label}
-                      onChange={(e) => updateAnswerRow(idx, 'label', e.target.value)}
-                      placeholder={`Option ${idx + 1}`}
-                    />
+                  <div key={idx} className="flex w-full items-end gap-2">
+                    <div className="min-w-0 flex-1">
+                      <Input
+                        value={row.label}
+                        onChange={(e) => updateAnswerRow(idx, 'label', e.target.value)}
+                        placeholder={`Option ${idx + 1}`}
+                        className="w-full"
+                      />
+                    </div>
                     <Button
                       type="button"
                       variant="danger"
+                      className="shrink-0"
                       onClick={() =>
                         setQModal((m) => ({
                           ...m,

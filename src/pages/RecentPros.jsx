@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Building2 } from 'lucide-react'
 import { api } from '../api/client.js'
 import { mapAdminProfessional } from '../lib/mappers.js'
+import DeleteAllButton from '../components/DeleteAllButton.jsx'
 import PhoneInput from '../components/PhoneInput.jsx'
 import {
   Button,
@@ -10,6 +11,7 @@ import {
   Input,
   Loading,
   Modal,
+  PageHeader,
   Textarea,
 } from '../components/ui.jsx'
 import {
@@ -140,7 +142,21 @@ export default function RecentPros() {
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-bold text-navy">Recent Pro.</h1>
+      <PageHeader
+        title="Recent Pro."
+        subtitle="Delete all permanently removes every professional from the database."
+        actions={
+          <DeleteAllButton
+            label="Delete all professionals"
+            confirmText="Permanently delete ALL professionals from the database?\n\nType DELETE to confirm."
+            onConfirm={async () => {
+              const data = await api.deleteAllProfessionals()
+              setFlash(`Deleted ${data.count ?? 0} professional(s).`)
+              await load()
+            }}
+          />
+        }
+      />
       {flash ? <p className="mb-3 text-sm font-semibold text-ok">{flash}</p> : null}
       <ErrorBanner message={error} />
       {loading ? <Loading className="mb-3 py-6" /> : null}

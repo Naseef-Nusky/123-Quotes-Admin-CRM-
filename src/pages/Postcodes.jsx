@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { api } from '../api/client.js'
-import { clearPostcodeCache } from '../components/PostcodeInput.jsx'
+import DeleteAllButton from '../components/DeleteAllButton.jsx'
+import { clearPostcodeCache } from '../lib/postcodeCache.js'
 import {
   Button,
   ErrorBanner,
@@ -21,12 +22,9 @@ const emptyForm = {
   longitude: '',
 }
 
-const PAGE_SIZE = 100
-
 export default function Postcodes() {
   const [rows, setRows] = useState([])
   const [total, setTotal] = useState(0)
-  const [skip, setSkip] = useState(0)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -41,7 +39,7 @@ export default function Postcodes() {
     setLoading(true)
     setError('')
     try {
-      const params = { limit: PAGE_SIZE, skip }
+      const params = { limit: 'all' }
       if (search) params.q = search
       const data = await api.managePostcodes(params)
       setRows(data.results || [])
@@ -53,7 +51,7 @@ export default function Postcodes() {
     } finally {
       setLoading(false)
     }
-  }, [search, skip])
+  }, [search])
 
   useEffect(() => {
     load()
@@ -61,7 +59,6 @@ export default function Postcodes() {
 
   useEffect(() => {
     const t = setTimeout(() => {
-      setSkip(0)
       setSearch(q.trim())
     }, 300)
     return () => clearTimeout(t)
@@ -147,21 +144,28 @@ export default function Postcodes() {
     }
   }
 
-  const pageStart = total === 0 ? 0 : skip + 1
-  const pageEnd = Math.min(skip + PAGE_SIZE, total)
-  const canPrev = skip > 0
-  const canNext = skip + PAGE_SIZE < total
-
   return (
     <div>
       <PageHeader
         title="Postcodes"
         subtitle="Manage UK outcodes used for autocomplete and area matching."
         actions={
-          <Button onClick={openAdd}>
-            <Plus className="mr-1.5 size-4" />
-            Add postcode
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={openAdd}>
+              <Plus className="mr-1.5 size-4" />
+              Add postcode
+            </Button>
+            <DeleteAllButton
+              label="Delete all postcodes"
+              confirmText="Permanently delete ALL postcodes from the database?\n\nType DELETE to confirm."
+              onConfirm={async () => {
+                const data = await api.deleteAllPostcodes()
+                clearPostcodeCache()
+                setFlash(`Deleted ${data.count ?? 0} postcode(s).`)
+                await load()
+              }}
+            />
+          </div>
         }
       />
 
@@ -175,16 +179,14 @@ export default function Postcodes() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
-        <p className="text-xs text-slate-500">
-          {total ? `${pageStart}–${pageEnd} of ${total}` : '0 results'}
-        </p>
+        <p className="text-xs text-slate-500">{total ? `${total} results` : '0 results'}</p>
       </div>
 
       {loading ? <Loading className="mb-3 py-6" /> : null}
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="max-h-[70vh] overflow-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-500">
+          <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
             <tr>
               <th className="px-4 py-3">Outcode</th>
               <th className="px-4 py-3">Town</th>
@@ -224,25 +226,6 @@ export default function Postcodes() {
           </tbody>
         </table>
       </div>
-
-      {total > PAGE_SIZE ? (
-        <div className="mt-4 flex justify-end gap-2">
-          <Button
-            variant="secondary"
-            disabled={!canPrev || loading}
-            onClick={() => setSkip((s) => Math.max(0, s - PAGE_SIZE))}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="secondary"
-            disabled={!canNext || loading}
-            onClick={() => setSkip((s) => s + PAGE_SIZE)}
-          >
-            Next
-          </Button>
-        </div>
-      ) : null}
 
       <Modal
         open={mode === 'add' || mode === 'edit'}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { api } from '../api/client.js'
+import DeleteAllButton from '../components/DeleteAllButton.jsx'
 import {
   Button,
   ErrorBanner,
@@ -176,10 +177,21 @@ export default function TokenPackages() {
         title="Token packages"
         subtitle="Edit token packs shown when professionals recharge to reach out to leads."
         actions={
-          <Button onClick={openAdd}>
-            <Plus className="mr-1.5 size-4" />
-            Add package
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={openAdd}>
+              <Plus className="mr-1.5 size-4" />
+              Add package
+            </Button>
+            <DeleteAllButton
+              label="Delete all packages"
+              confirmText="Permanently delete ALL token packages from the database?\n\nType DELETE to confirm."
+              onConfirm={async () => {
+                const data = await api.deleteAllPackages()
+                setFlash(`Deleted ${data.count ?? 0} package(s).`)
+                await load()
+              }}
+            />
+          </div>
         }
       />
 
@@ -197,9 +209,9 @@ export default function TokenPackages() {
 
       {loading ? <Loading className="mb-3 py-6" /> : null}
 
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div className="max-h-[70vh] overflow-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-slate-500">
+          <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
             <tr>
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Tokens</th>

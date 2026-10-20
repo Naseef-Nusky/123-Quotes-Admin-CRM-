@@ -92,6 +92,17 @@ export const api = {
   updateCustomer: (id, body) =>
     request(`/admin/customers/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteCustomer: (id) => request(`/admin/customers/${id}`, { method: 'DELETE' }),
+  deleteAllCustomers: () => request('/admin/customers/all', { method: 'DELETE' }),
+  deleteAllProfessionals: () => request('/admin/professionals/all', { method: 'DELETE' }),
+  deleteAllLeads: () => request('/admin/leads/all', { method: 'DELETE' }),
+  deleteAllPayments: () => request('/admin/payments/all', { method: 'DELETE' }),
+  deleteAllBusinessApplications: () =>
+    request('/admin/business-applications/all', { method: 'DELETE' }),
+  deleteAllPackages: () => request('/admin/packages/all', { method: 'DELETE' }),
+  deleteAllCategories: () => request('/admin/categories/all', { method: 'DELETE' }),
+  deleteAllPostcodes: () => request('/admin/postcodes/all', { method: 'DELETE' }),
+  deleteAllSystemUsers: () => request('/admin/users/all', { method: 'DELETE' }),
+  deleteAllCategoryErrors: () => request('/admin/category-errors/all', { method: 'DELETE' }),
 
   getLeads: () => request('/leads/admin/all'),
   updateLead: (id, body) =>

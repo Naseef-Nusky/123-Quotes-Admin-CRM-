@@ -7,7 +7,8 @@ import {
   normalizeUnlockTiersForUi,
   serializeUnlockTiers,
 } from '../components/UnlockTokenTiersForm.jsx'
-import { Button, ErrorBanner, Input, Loading, Modal, Select } from '../components/ui.jsx'
+import DeleteAllButton from '../components/DeleteAllButton.jsx'
+import { Button, ErrorBanner, Input, Loading, Modal, PageHeader, Select } from '../components/ui.jsx'
 import {
   DEFAULT_COUNTRY_CODE,
   dialForCountry,
@@ -19,7 +20,8 @@ import { useAdminLeads } from '../hooks/useAdminLeads.js'
 const LEAD_STATUSES = ['OPEN', 'MATCHED', 'PARTIALLY_UNLOCKED', 'CLOSED', 'CANCELLED']
 
 export default function Leads() {
-  const { leads, loading, error, deleteLead, updateLead, unlockTiers } = useAdminLeads()
+  const { leads, loading, error, deleteLead, deleteAllLeads, updateLead, unlockTiers } =
+    useAdminLeads()
   const [editing, setEditing] = useState(null)
   const [tokenLead, setTokenLead] = useState(null)
   const [tiers, setTiers] = useState([])
@@ -194,6 +196,20 @@ export default function Leads() {
 
   return (
     <div>
+      <PageHeader
+        title="All Leads"
+        subtitle={`${leads.filter((l) => l.email && l.email !== '—').length} leads have email/phone from the dump. Others had user_id=0 (no contact in SQL). Sorted with contacts first.`}
+        actions={
+          <DeleteAllButton
+            label="Delete all leads"
+            confirmText={`Permanently delete ALL ${leads.length} leads from the database?\n\nType DELETE to confirm.`}
+            onConfirm={async () => {
+              const data = await deleteAllLeads()
+              window.alert(`Deleted ${data.count ?? 0} lead request(s).`)
+            }}
+          />
+        }
+      />
       <ErrorBanner message={error} />
       {loading ? <Loading className="mb-3 py-6" /> : null}
       <DataTable

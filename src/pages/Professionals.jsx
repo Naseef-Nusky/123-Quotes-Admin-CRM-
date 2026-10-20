@@ -6,6 +6,7 @@ import BusinessAddWizard from '../components/BusinessAddWizard.jsx'
 import PhoneInput from '../components/PhoneInput.jsx'
 import PostcodeInput from '../components/PostcodeInput.jsx'
 import { DataTable } from '../components/AdminViews.jsx'
+import DeleteAllButton from '../components/DeleteAllButton.jsx'
 import {
   Button,
   ErrorBanner,
@@ -208,10 +209,21 @@ export default function Professionals() {
         title="Professional"
         subtitle="Add, view, edit, or delete business accounts."
         actions={
-          <Button onClick={openAdd}>
-            <Plus className="mr-1.5 size-4" />
-            Add business
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={openAdd}>
+              <Plus className="mr-1.5 size-4" />
+              Add business
+            </Button>
+            <DeleteAllButton
+              label="Delete all professionals"
+              confirmText="Permanently delete ALL professionals from the database?\n\nType DELETE to confirm."
+              onConfirm={async () => {
+                const data = await api.deleteAllProfessionals()
+                setFlash(`Deleted ${data.count ?? 0} professional(s).`)
+                await load()
+              }}
+            />
+          </div>
         }
       />
 

@@ -111,7 +111,7 @@ export function Modal({ open, title, onClose, children, wide }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-navy/50 p-4">
       <div
         className={`max-h-[90vh] w-full overflow-auto rounded-xl bg-white p-6 shadow-xl ${
-          wide ? 'max-w-3xl' : 'max-w-lg'
+          wide ? 'max-w-4xl' : 'max-w-xl'
         }`}
       >
         <div className="mb-4 flex items-center justify-between gap-3">
