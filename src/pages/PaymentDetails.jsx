@@ -8,6 +8,8 @@ import {
   Loading,
   Modal,
   PageHeader,
+  RowActions,
+  ViewAction,
   StatusBadge,
   formatDate,
   formatMoney,
@@ -104,9 +106,9 @@ export default function PaymentDetails({ variant = 'recent' }) {
         key: 'action',
         label: 'Action',
         render: (row) => (
-          <Button variant="secondary" onClick={() => setActive(row)}>
-            View
-          </Button>
+          <RowActions>
+            <ViewAction onClick={() => setActive(row)} />
+          </RowActions>
         ),
       },
     ],

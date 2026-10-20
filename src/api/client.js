@@ -102,7 +102,6 @@ export const api = {
   deleteAllCategories: () => request('/admin/categories/all', { method: 'DELETE' }),
   deleteAllPostcodes: () => request('/admin/postcodes/all', { method: 'DELETE' }),
   deleteAllSystemUsers: () => request('/admin/users/all', { method: 'DELETE' }),
-  deleteAllCategoryErrors: () => request('/admin/category-errors/all', { method: 'DELETE' }),
 
   getLeads: () => request('/leads/admin/all'),
   updateLead: (id, body) =>

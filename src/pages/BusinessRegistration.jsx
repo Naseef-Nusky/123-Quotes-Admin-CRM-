@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Plus } from 'lucide-react'
 import { api } from '../api/client.js'
 import { mapBusinessApplication } from '../lib/mappers.js'
 import BusinessAddWizard from '../components/BusinessAddWizard.jsx'
 import DeleteAllButton from '../components/DeleteAllButton.jsx'
-import { Button, Card, ErrorBanner, Loading, Modal, PageHeader } from '../components/ui.jsx'
+import { ActionIconButton, Button, Card, ErrorBanner, Loading, Modal, PageHeader, RowActions, ViewAction } from '../components/ui.jsx'
+import { Check, Plus, X } from 'lucide-react'
 
 export default function BusinessRegistration() {
   const [regs, setRegs] = useState([])
@@ -85,7 +85,7 @@ export default function BusinessRegistration() {
         title="Business Registration"
         subtitle="Review every business application. Additional signups for existing emails appear here for approval too."
         actions={
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-nowrap gap-2">
             <Button onClick={openAdd}>
               <Plus className="mr-1.5 size-4" />
               Add business
@@ -107,7 +107,7 @@ export default function BusinessRegistration() {
       {loading ? <Loading className="mb-3 py-6" /> : null}
       <Card className="overflow-hidden p-0">
         <div className="max-h-[70vh] overflow-auto">
-        <table className="w-full text-left text-sm">
+        <table className="w-full min-w-[900px] text-left text-sm">
           <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
             <tr>
               <th className="px-4 py-3">Business</th>
@@ -115,7 +115,7 @@ export default function BusinessRegistration() {
               <th className="px-4 py-3">Email</th>
               <th className="px-4 py-3">Service</th>
               <th className="px-4 py-3">Type</th>
-              <th className="px-4 py-3">Actions</th>
+              <th className="sticky right-0 z-20 bg-slate-50 px-4 py-3 text-right shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -136,18 +136,16 @@ export default function BusinessRegistration() {
                     {r.isAdditional ? 'Additional' : 'New'}
                   </span>
                 </td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="ghost" onClick={() => openView(r)}>
-                      View
-                    </Button>
-                    <Button variant="primary" onClick={() => approve(r.id)}>
-                      Approve
-                    </Button>
-                    <Button variant="danger" onClick={() => decline(r.id)}>
-                      Decline
-                    </Button>
-                  </div>
+                <td className="sticky right-0 bg-white px-4 py-3 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">
+                  <RowActions>
+                    <ViewAction onClick={() => openView(r)} />
+                    <ActionIconButton label="Approve" variant="primary" onClick={() => approve(r.id)}>
+                      <Check className="size-4" />
+                    </ActionIconButton>
+                    <ActionIconButton label="Decline" variant="danger" onClick={() => decline(r.id)}>
+                      <X className="size-4" />
+                    </ActionIconButton>
+                  </RowActions>
                 </td>
               </tr>
             ))}

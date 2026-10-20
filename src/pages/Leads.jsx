@@ -8,7 +8,8 @@ import {
   serializeUnlockTiers,
 } from '../components/UnlockTokenTiersForm.jsx'
 import DeleteAllButton from '../components/DeleteAllButton.jsx'
-import { Button, ErrorBanner, Input, Loading, Modal, PageHeader, Select } from '../components/ui.jsx'
+import { ActionIconButton, Button, DeleteAction, DetailGrid, EditAction, ErrorBanner, Input, Loading, Modal, PageHeader, RowActions, Select, ViewAction } from '../components/ui.jsx'
+import { Coins } from 'lucide-react'
 import {
   DEFAULT_COUNTRY_CODE,
   dialForCountry,
@@ -23,6 +24,7 @@ export default function Leads() {
   const { leads, loading, error, deleteLead, deleteAllLeads, updateLead, unlockTiers } =
     useAdminLeads()
   const [editing, setEditing] = useState(null)
+  const [viewing, setViewing] = useState(null)
   const [tokenLead, setTokenLead] = useState(null)
   const [tiers, setTiers] = useState([])
   const [useIndividual, setUseIndividual] = useState(false)
@@ -140,6 +142,13 @@ export default function Leads() {
     { key: 'email', label: 'Email' },
     { key: 'service', label: 'Type' },
     {
+      key: 'postcodeInfo',
+      label: 'Postcode',
+      render: (row) => (
+        <span className="font-semibold whitespace-nowrap">{row.postcodeRaw || '—'}</span>
+      ),
+    },
+    {
       key: 'tokenCost',
       label: 'Next tokens',
       render: (row) => (
@@ -169,15 +178,13 @@ export default function Leads() {
       key: 'action',
       label: 'Action',
       render: (row) => (
-        <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" onClick={() => openEdit(row)}>
-            Edit
-          </Button>
-          <Button variant="secondary" onClick={() => openTokens(row)}>
-            Tokens
-          </Button>
-          <Button
-            variant="danger"
+        <RowActions>
+          <ViewAction onClick={() => setViewing(row)} />
+          <EditAction onClick={() => openEdit(row)} />
+          <ActionIconButton label="Tokens" variant="secondary" onClick={() => openTokens(row)}>
+            <Coins className="size-4" />
+          </ActionIconButton>
+          <DeleteAction
             onClick={async () => {
               if (!window.confirm(`Delete lead for “${row.name}”?`)) return
               try {
@@ -186,10 +193,8 @@ export default function Leads() {
                 window.alert(err.message || 'Delete failed')
               }
             }}
-          >
-            Delete
-          </Button>
-        </div>
+          />
+        </RowActions>
       ),
     },
   ]
@@ -218,6 +223,81 @@ export default function Leads() {
         rows={leads}
         searchKeys={['name', 'email', 'phone', 'service']}
       />
+
+      <Modal
+        open={!!viewing}
+        title={viewing ? `Lead · ${viewing.name}` : 'Lead'}
+        onClose={() => setViewing(null)}
+        wide
+      >
+        {viewing ? (
+          <div className="space-y-5">
+            <DetailGrid
+              items={[
+                { label: 'Name', value: viewing.name },
+                { label: 'Service', value: viewing.service },
+                { label: 'Email', value: viewing.email },
+                { label: 'Contact No', value: viewing.phone },
+                { label: 'Status', value: viewing.status },
+                { label: 'Date', value: viewing.date },
+                { label: 'Next tokens', value: viewing.tokenCost ?? 1 },
+                {
+                  label: 'Unlocks / matched',
+                  value: `${viewing.unlockedCount ?? 0} unlocks · ${viewing.matchedCount ?? 0} matched`,
+                },
+              ]}
+            />
+            <div>
+              <h3 className="mb-2 border-b border-slate-200 pb-2 text-sm font-bold uppercase tracking-wide text-navy">
+                Postcode (old DB postal_codes)
+              </h3>
+              <DetailGrid
+                items={[
+                  { label: 'Full postcode', value: viewing.postcodeRaw },
+                  { label: 'Outcode', value: viewing.postcodeInfo?.outcode },
+                  { label: 'District / Town', value: viewing.postcodeInfo?.district || viewing.city },
+                  { label: 'Ward / Region', value: viewing.postcodeInfo?.ward },
+                  { label: 'Country', value: viewing.postcodeInfo?.country },
+                ]}
+              />
+              {!viewing.postcodeInfo ? (
+                <p className="mt-2 text-xs text-slate-500">
+                  No postal_codes match for this lead in the old DB (postcode missing or area-only).
+                </p>
+              ) : null}
+            </div>
+            <div>
+              <h3 className="mb-2 border-b border-slate-200 pb-2 text-sm font-bold uppercase tracking-wide text-navy">
+                Details Provided
+              </h3>
+              <ul className="space-y-2 text-sm">
+                {(viewing.details || []).map((d, idx) => (
+                  <li key={d.questionId || `${d.q}-${idx}`}>
+                    <span className="text-slate-600">• {d.q}</span>{' '}
+                    {d.display || d.a ? (
+                      <span className="font-bold text-navy">{d.display || d.a}</span>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="flex justify-end gap-2 pt-1">
+              <Button variant="secondary" onClick={() => setViewing(null)}>
+                Close
+              </Button>
+              <Button
+                onClick={() => {
+                  const row = viewing
+                  setViewing(null)
+                  openEdit(row)
+                }}
+              >
+                Edit lead
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
 
       <Modal open={!!editing} title="Edit lead" onClose={() => setEditing(null)} wide>
         {editing ? (

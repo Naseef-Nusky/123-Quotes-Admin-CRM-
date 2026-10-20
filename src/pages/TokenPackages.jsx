@@ -1,14 +1,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Power } from 'lucide-react'
 import { api } from '../api/client.js'
 import DeleteAllButton from '../components/DeleteAllButton.jsx'
 import {
+  ActionIconButton,
   Button,
+  DetailGrid,
+  EditAction,
   ErrorBanner,
+  ViewAction,
   Input,
   Loading,
   Modal,
   PageHeader,
+  RowActions,
   Select,
   Textarea,
 } from '../components/ui.jsx'
@@ -42,6 +47,7 @@ export default function TokenPackages() {
   const [error, setError] = useState('')
   const [flash, setFlash] = useState('')
   const [mode, setMode] = useState(null) // add | edit
+  const [viewing, setViewing] = useState(null)
   const [active, setActive] = useState(null)
   const [form, setForm] = useState(emptyForm)
   const [q, setQ] = useState('')
@@ -177,7 +183,7 @@ export default function TokenPackages() {
         title="Token packages"
         subtitle="Edit token packs shown when professionals recharge to reach out to leads."
         actions={
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-nowrap gap-2">
             <Button onClick={openAdd}>
               <Plus className="mr-1.5 size-4" />
               Add package
@@ -218,7 +224,7 @@ export default function TokenPackages() {
               <th className="px-4 py-3">Price</th>
               <th className="px-4 py-3">Sort</th>
               <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Actions</th>
+              <th className="sticky right-0 z-20 bg-slate-50 px-4 py-3 text-right shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -246,15 +252,18 @@ export default function TokenPackages() {
                     {pkg.isActive === false ? 'Inactive' : 'Active'}
                   </span>
                 </td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="secondary" onClick={() => openEdit(pkg)}>
-                      Edit
-                    </Button>
-                    <Button variant="ghost" onClick={() => toggleActive(pkg)}>
-                      {pkg.isActive === false ? 'Activate' : 'Deactivate'}
-                    </Button>
-                  </div>
+                <td className="sticky right-0 bg-white px-4 py-3 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">
+                  <RowActions>
+                    <ViewAction onClick={() => setViewing(pkg)} />
+                    <EditAction onClick={() => openEdit(pkg)} />
+                    <ActionIconButton
+                      label={pkg.isActive === false ? 'Activate' : 'Deactivate'}
+                      variant="ghost"
+                      onClick={() => toggleActive(pkg)}
+                    >
+                      <Power className="size-4" />
+                    </ActionIconButton>
+                  </RowActions>
                 </td>
               </tr>
             ))}
@@ -268,6 +277,42 @@ export default function TokenPackages() {
           </tbody>
         </table>
       </div>
+
+      <Modal
+        open={!!viewing}
+        title={viewing ? `Package · ${viewing.name}` : 'Package'}
+        onClose={() => setViewing(null)}
+      >
+        {viewing ? (
+          <div className="space-y-4">
+            <DetailGrid
+              items={[
+                { label: 'Name', value: viewing.name },
+                { label: 'Tokens', value: viewing.tokens },
+                { label: 'Price', value: formatMoney(viewing.priceCents, viewing.currency) },
+                { label: 'Currency', value: viewing.currency || 'GBP' },
+                { label: 'Status', value: viewing.isActive === false ? 'Inactive' : 'Active' },
+                { label: 'Sort order', value: viewing.sortOrder ?? 0 },
+                { label: 'Description', value: viewing.description, wide: true },
+              ]}
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => setViewing(null)}>
+                Close
+              </Button>
+              <Button
+                onClick={() => {
+                  const row = viewing
+                  setViewing(null)
+                  openEdit(row)
+                }}
+              >
+                Edit package
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
 
       <Modal
         open={Boolean(mode)}

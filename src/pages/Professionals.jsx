@@ -13,7 +13,11 @@ import {
   Input,
   Loading,
   Modal,
+  DeleteAction,
+  EditAction,
   PageHeader,
+  RowActions,
+  ViewAction,
   Select,
   StatusBadge,
   Textarea,
@@ -184,17 +188,11 @@ export default function Professionals() {
         key: 'action',
         label: 'Action',
         render: (pro) => (
-          <div className="flex flex-wrap gap-2">
-            <Button variant="ghost" onClick={() => openView(pro)}>
-              View
-            </Button>
-            <Button variant="secondary" onClick={() => openEdit(pro)}>
-              Edit
-            </Button>
-            <Button variant="danger" onClick={() => remove(pro)}>
-              Delete
-            </Button>
-          </div>
+          <RowActions>
+            <ViewAction onClick={() => openView(pro)} />
+            <EditAction onClick={() => openEdit(pro)} />
+            <DeleteAction onClick={() => remove(pro)} />
+          </RowActions>
         ),
       },
     ],
@@ -209,7 +207,7 @@ export default function Professionals() {
         title="Professional"
         subtitle="Add, view, edit, or delete business accounts."
         actions={
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-nowrap gap-2">
             <Button onClick={openAdd}>
               <Plus className="mr-1.5 size-4" />
               Add business

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { MapPin, Zap, Phone, Mail } from 'lucide-react'
+import { Check, Coins, MapPin, Zap, Phone, Mail } from 'lucide-react'
 import PhoneInput from './PhoneInput.jsx'
 import PostcodeInput from './PostcodeInput.jsx'
 import {
@@ -13,7 +13,7 @@ import {
   formatIntlPhone,
   parseIntlPhone,
 } from '../data/countryDialCodes.js'
-import { Button, Card, Input, Loading, Modal, Select, Textarea } from './ui.jsx'
+import { ActionIconButton, Button, Card, DeleteAction, EditAction, Input, Loading, Modal, RowActions, Select, Textarea } from './ui.jsx'
 
 const LEAD_STATUSES = ['OPEN', 'MATCHED', 'PARTIALLY_UNLOCKED', 'CLOSED', 'CANCELLED']
 
@@ -413,30 +413,30 @@ export function LeadSplitView({
                       {selected.ago}
                     </span>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <RowActions className="max-w-full overflow-x-auto">
                     {onEdit ? (
                       <>
-                        <Button variant="secondary" onClick={() => openEdit(selected)}>
-                          Edit
-                        </Button>
-                        <Button variant="secondary" onClick={() => openTokens(selected)}>
-                          Tokens
-                        </Button>
+                        <EditAction onClick={() => openEdit(selected)} />
+                        <ActionIconButton
+                          label="Tokens"
+                          variant="secondary"
+                          onClick={() => openTokens(selected)}
+                        >
+                          <Coins className="size-4" />
+                        </ActionIconButton>
                       </>
                     ) : null}
-                    <Button
-                      variant="danger"
-                      onClick={() => onDelete?.(selected)}
-                      disabled={!onDelete}
-                    >
-                      Delete
-                    </Button>
+                    <DeleteAction onClick={() => onDelete?.(selected)} disabled={!onDelete} />
                     {showConfirm ? (
-                      <Button variant="primary" onClick={() => onConfirm?.(selected)}>
-                        Confirm
-                      </Button>
+                      <ActionIconButton
+                        label="Confirm"
+                        variant="primary"
+                        onClick={() => onConfirm?.(selected)}
+                      >
+                        <Check className="size-4" />
+                      </ActionIconButton>
                     ) : null}
-                  </div>
+                  </RowActions>
                 </div>
 
                 <p className="mt-4 text-lg font-bold text-navy">{selected.service}</p>
@@ -466,6 +466,25 @@ export function LeadSplitView({
                   <p className="flex items-center gap-2">
                     <Mail className="size-4 shrink-0 text-blue" strokeWidth={2} />
                     <span>{selected.email}</span>
+                  </p>
+                  <p className="flex items-start gap-2">
+                    <MapPin className="mt-0.5 size-4 shrink-0 text-blue" strokeWidth={2} />
+                    <span>
+                      <span className="font-semibold text-navy">
+                        {selected.postcodeRaw || selected.postcode || '—'}
+                      </span>
+                      {selected.postcodeInfo ? (
+                        <span className="block text-xs text-slate-500">
+                          {[
+                            selected.postcodeInfo.district,
+                            selected.postcodeInfo.ward,
+                            selected.postcodeInfo.country,
+                          ]
+                            .filter(Boolean)
+                            .join(' · ')}
+                        </span>
+                      ) : null}
+                    </span>
                   </p>
                 </div>
 
@@ -684,7 +703,14 @@ export function DataTable({ title, columns, rows, searchKeys = [] }) {
             <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
               <tr>
                 {columns.map((c) => (
-                  <th key={c.key} className="px-4 py-3 font-semibold">
+                  <th
+                    key={c.key}
+                    className={`px-4 py-3 font-semibold whitespace-nowrap ${
+                      c.key === 'action' || c.key === 'actions'
+                        ? 'sticky right-0 z-20 bg-slate-50 text-right shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]'
+                        : ''
+                    }`}
+                  >
                     {c.label}
                   </th>
                 ))}
@@ -694,7 +720,14 @@ export function DataTable({ title, columns, rows, searchKeys = [] }) {
               {filtered.map((row, idx) => (
                 <tr key={row.id || idx} className="border-t border-slate-100 hover:bg-slate-50/80">
                   {columns.map((c) => (
-                    <td key={c.key} className="px-4 py-3 text-navy">
+                    <td
+                      key={c.key}
+                      className={`px-4 py-3 text-navy ${
+                        c.key === 'action' || c.key === 'actions'
+                          ? 'sticky right-0 bg-white whitespace-nowrap shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]'
+                          : ''
+                      }`}
+                    >
                       {c.render ? c.render(row, idx) : row[c.key]}
                     </td>
                   ))}

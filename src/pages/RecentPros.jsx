@@ -11,7 +11,10 @@ import {
   Input,
   Loading,
   Modal,
+  DeleteAction,
+  EditAction,
   PageHeader,
+  RowActions,
   Textarea,
 } from '../components/ui.jsx'
 import {
@@ -211,14 +214,10 @@ export default function RecentPros() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="secondary" onClick={() => openEdit(selected)}>
-                      Edit
-                    </Button>
-                    <Button variant="danger" onClick={() => remove(selected)}>
-                      Delete
-                    </Button>
-                  </div>
+                  <RowActions>
+                    <EditAction onClick={() => openEdit(selected)} />
+                    <DeleteAction onClick={() => remove(selected)} />
+                  </RowActions>
                 </div>
                 <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50/80 p-5">
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">

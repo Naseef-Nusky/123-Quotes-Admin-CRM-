@@ -15,7 +15,6 @@ import {
   ShoppingBag,
   Shield,
   ClipboardCheck,
-  TriangleAlert,
   Folders,
   Coins,
   SlidersHorizontal,
@@ -32,7 +31,6 @@ const navGroups = [
     items: [
       { to: '/dashboard', label: 'Dashboard', end: true, icon: LayoutDashboard },
       { to: '/business-registration', label: 'Business Registration', icon: ClipboardCheck },
-      { to: '/category-errors', label: 'Category Errors', icon: TriangleAlert },
       { to: '/system-users', label: 'System Users', icon: Shield },
       { to: '/customers', label: 'Customers', icon: UsersRound },
     ],

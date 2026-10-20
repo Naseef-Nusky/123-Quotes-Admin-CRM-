@@ -5,21 +5,23 @@ import DeleteAllButton from '../components/DeleteAllButton.jsx'
 import { clearPostcodeCache } from '../lib/postcodeCache.js'
 import {
   Button,
+  DeleteAction,
+  DetailGrid,
+  EditAction,
   ErrorBanner,
   Input,
   Loading,
   Modal,
   PageHeader,
+  RowActions,
+  ViewAction,
 } from '../components/ui.jsx'
 
 const emptyForm = {
   outcode: '',
   town: '',
   region: '',
-  ukRegion: '',
   country: '',
-  latitude: '',
-  longitude: '',
 }
 
 export default function Postcodes() {
@@ -30,6 +32,7 @@ export default function Postcodes() {
   const [error, setError] = useState('')
   const [flash, setFlash] = useState('')
   const [mode, setMode] = useState(null) // add | edit
+  const [viewing, setViewing] = useState(null)
   const [active, setActive] = useState(null)
   const [form, setForm] = useState(emptyForm)
   const [q, setQ] = useState('')
@@ -78,10 +81,7 @@ export default function Postcodes() {
       outcode: row.outcode || '',
       town: row.town || '',
       region: row.region || '',
-      ukRegion: row.ukRegion || '',
       country: row.country || '',
-      latitude: row.latitude != null ? String(row.latitude) : '',
-      longitude: row.longitude != null ? String(row.longitude) : '',
     })
     setError('')
   }
@@ -105,10 +105,7 @@ export default function Postcodes() {
         outcode: form.outcode.trim(),
         town: form.town.trim() || null,
         region: form.region.trim() || null,
-        ukRegion: form.ukRegion.trim() || null,
         country: form.country.trim() || null,
-        latitude: form.latitude.trim() === '' ? null : form.latitude.trim(),
-        longitude: form.longitude.trim() === '' ? null : form.longitude.trim(),
       }
 
       if (mode === 'add') {
@@ -150,7 +147,7 @@ export default function Postcodes() {
         title="Postcodes"
         subtitle="Manage UK outcodes used for autocomplete and area matching."
         actions={
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-nowrap gap-2">
             <Button onClick={openAdd}>
               <Plus className="mr-1.5 size-4" />
               Add postcode
@@ -185,14 +182,14 @@ export default function Postcodes() {
       {loading ? <Loading className="mb-3 py-6" /> : null}
 
       <div className="max-h-[70vh] overflow-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-left text-sm">
+        <table className="w-full min-w-[760px] text-left text-sm">
           <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
             <tr>
               <th className="px-4 py-3">Outcode</th>
               <th className="px-4 py-3">Town</th>
               <th className="px-4 py-3">Region</th>
               <th className="px-4 py-3">Country</th>
-              <th className="px-4 py-3">Actions</th>
+              <th className="sticky right-0 z-20 bg-slate-50 px-4 py-3 text-right shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -200,19 +197,14 @@ export default function Postcodes() {
               <tr key={row.id} className="border-t border-slate-100">
                 <td className="px-4 py-3 font-semibold text-navy">{row.outcode}</td>
                 <td className="px-4 py-3 text-slate-700">{row.town || '—'}</td>
-                <td className="px-4 py-3 text-slate-600">
-                  {[row.region, row.ukRegion].filter(Boolean).join(' · ') || '—'}
-                </td>
+                <td className="px-4 py-3 text-slate-600">{row.region || '—'}</td>
                 <td className="px-4 py-3 text-slate-600">{row.country || '—'}</td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="secondary" onClick={() => openEdit(row)}>
-                      Edit
-                    </Button>
-                    <Button variant="danger" onClick={() => remove(row)}>
-                      Delete
-                    </Button>
-                  </div>
+                <td className="sticky right-0 bg-white px-4 py-3 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">
+                  <RowActions>
+                    <ViewAction onClick={() => setViewing(row)} />
+                    <EditAction onClick={() => openEdit(row)} />
+                    <DeleteAction onClick={() => remove(row)} />
+                  </RowActions>
                 </td>
               </tr>
             ))}
@@ -226,6 +218,43 @@ export default function Postcodes() {
           </tbody>
         </table>
       </div>
+
+      <Modal
+        open={!!viewing}
+        title={viewing ? `Postcode · ${viewing.outcode}` : 'Postcode'}
+        onClose={() => setViewing(null)}
+      >
+        {viewing ? (
+          <div className="space-y-4">
+            <DetailGrid
+              items={[
+                { label: 'Outcode', value: viewing.outcode },
+                { label: 'District / Town', value: viewing.town },
+                { label: 'Ward / Region', value: viewing.region },
+                { label: 'Country', value: viewing.country },
+              ]}
+            />
+            <p className="text-xs text-slate-500">
+              From old DB <code>postal_codes</code>: district → Town, ward → Region, Country →
+              Country.
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => setViewing(null)}>
+                Close
+              </Button>
+              <Button
+                onClick={() => {
+                  const row = viewing
+                  setViewing(null)
+                  openEdit(row)
+                }}
+              >
+                Edit postcode
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
 
       <Modal
         open={mode === 'add' || mode === 'edit'}
@@ -248,40 +277,17 @@ export default function Postcodes() {
               onChange={(e) => setForm((f) => ({ ...f, town: e.target.value }))}
               placeholder="e.g. Brighton"
             />
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Input
-                label="Region (optional)"
-                value={form.region}
-                onChange={(e) => setForm((f) => ({ ...f, region: e.target.value }))}
-              />
-              <Input
-                label="UK region (optional)"
-                value={form.ukRegion}
-                onChange={(e) => setForm((f) => ({ ...f, ukRegion: e.target.value }))}
-              />
-            </div>
+            <Input
+              label="Region (optional)"
+              value={form.region}
+              onChange={(e) => setForm((f) => ({ ...f, region: e.target.value }))}
+            />
             <Input
               label="Country (optional)"
               value={form.country}
               onChange={(e) => setForm((f) => ({ ...f, country: e.target.value }))}
               placeholder="e.g. England"
             />
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Input
-                label="Latitude (optional)"
-                type="number"
-                step="any"
-                value={form.latitude}
-                onChange={(e) => setForm((f) => ({ ...f, latitude: e.target.value }))}
-              />
-              <Input
-                label="Longitude (optional)"
-                type="number"
-                step="any"
-                value={form.longitude}
-                onChange={(e) => setForm((f) => ({ ...f, longitude: e.target.value }))}
-              />
-            </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="secondary" onClick={closeModal}>
                 Cancel

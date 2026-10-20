@@ -1,18 +1,24 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FolderTree, HelpCircle, Plus, Search } from 'lucide-react'
+import { Coins, FolderTree, HelpCircle, Plus, Search } from 'lucide-react'
 import { api } from '../api/client.js'
 import DeleteAllButton from '../components/DeleteAllButton.jsx'
 import {
+  ActionIconButton,
   Button,
   Card,
+  DeleteAction,
+  DetailGrid,
+  EditAction,
   ErrorBanner,
   Input,
   Loading,
   Modal,
   PageHeader,
+  RowActions,
   Select,
   Textarea,
+  ViewAction,
 } from '../components/ui.jsx'
 
 const CHILD_TYPES = [
@@ -130,6 +136,7 @@ export default function ProMgmt() {
   const [flash, setFlash] = useState('')
   const [error, setError] = useState('')
   const [catModal, setCatModal] = useState(null)
+  const [viewQuestion, setViewQuestion] = useState(null)
   const [qModal, setQModal] = useState(null)
 
   const flashMsg = useCallback((msg) => {
@@ -399,7 +406,7 @@ export default function ProMgmt() {
         title="Pro.Mgmt"
         subtitle="Full control: create, edit, and delete services and questionnaire questions."
         actions={
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-nowrap gap-2">
             <Button onClick={openAddCategory} disabled={saving || loading}>
               <Plus className="mr-1.5 size-4" />
               Add service
@@ -479,24 +486,22 @@ export default function ProMgmt() {
                     {(selected.tokenCost ?? 1) === 1 ? '' : 's'}
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="secondary" onClick={() => openEditCategory(selected)}>
-                    Edit
-                  </Button>
+                <RowActions className="max-w-full overflow-x-auto">
+                  <EditAction onClick={() => openEditCategory(selected)} />
                   <Link
                     to="/token-adjust"
-                    className="inline-flex items-center justify-center rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-navy hover:bg-slate-50"
+                    title="Tokens"
+                    aria-label="Tokens"
+                    className="inline-flex size-8 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-navy hover:bg-slate-50"
                   >
-                    Tokens
+                    <Coins className="size-4" />
                   </Link>
-                  <Button variant="danger" onClick={() => deleteCategory(selected)}>
-                    Delete
-                  </Button>
-                  <Button onClick={() => openAddQuestion(selected)}>
+                  <DeleteAction onClick={() => deleteCategory(selected)} />
+                  <Button size="sm" onClick={() => openAddQuestion(selected)}>
                     <Plus className="mr-1.5 size-4" />
                     Add question
                   </Button>
-                </div>
+                </RowActions>
               </div>
 
               <div className="space-y-3 p-5">
@@ -540,17 +545,11 @@ export default function ProMgmt() {
                           ) : null}
                         </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="secondary"
-                          onClick={() => openEditQuestion(selected, question)}
-                        >
-                          Edit
-                        </Button>
-                        <Button variant="danger" onClick={() => deleteQuestion(question)}>
-                          Delete
-                        </Button>
-                      </div>
+                      <RowActions>
+                        <ViewAction onClick={() => setViewQuestion(question)} />
+                        <EditAction onClick={() => openEditQuestion(selected, question)} />
+                        <DeleteAction onClick={() => deleteQuestion(question)} />
+                      </RowActions>
                     </div>
                   </div>
                 ))}
@@ -604,6 +603,46 @@ export default function ProMgmt() {
               </Button>
             </div>
           </form>
+        ) : null}
+      </Modal>
+
+      <Modal
+        open={!!viewQuestion}
+        title="Question"
+        onClose={() => setViewQuestion(null)}
+        wide
+      >
+        {viewQuestion ? (
+          <div className="space-y-4">
+            <DetailGrid
+              items={[
+                { label: 'Service', value: selected?.name },
+                { label: 'Question', value: viewQuestion.text, wide: true },
+                { label: 'Type', value: viewQuestion.type },
+                {
+                  label: 'Options',
+                  value: viewQuestion.answers?.length
+                    ? viewQuestion.answers.map((a) => a.label).join(' · ')
+                    : '—',
+                  wide: true,
+                },
+              ]}
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => setViewQuestion(null)}>
+                Close
+              </Button>
+              <Button
+                onClick={() => {
+                  const question = viewQuestion
+                  setViewQuestion(null)
+                  openEditQuestion(selected, question)
+                }}
+              >
+                Edit question
+              </Button>
+            </div>
+          </div>
         ) : null}
       </Modal>
 

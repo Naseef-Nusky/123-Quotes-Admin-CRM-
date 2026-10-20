@@ -17,9 +17,11 @@ export function timeAgo(date) {
 
 export function formatDateTime(date) {
   if (!date) return '—'
-  const d = new Date(date)
-  const pad = (n) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+  return new Date(date).toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  })
 }
 
 function maskPostcode(pc) {
@@ -212,6 +214,8 @@ export function mapAdminLead(lead, leadViewLocked = false, maxUnlocksPerLead = 0
     snippet,
     postcode: maskPostcode(lead.postcode),
     postcodeRaw: lead.postcode || customer?.postcode || '',
+    postcodeInfo: lead.postcodeInfo || null,
+    city: lead.city || customer?.city || '',
     interest: matchedCount,
     matchedCount,
     unlockedCount,

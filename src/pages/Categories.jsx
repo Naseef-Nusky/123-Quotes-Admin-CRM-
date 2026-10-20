@@ -4,11 +4,16 @@ import { api } from '../api/client.js'
 import DeleteAllButton from '../components/DeleteAllButton.jsx'
 import {
   Button,
+  DeleteAction,
+  DetailGrid,
+  EditAction,
+  ViewAction,
   ErrorBanner,
   Input,
   Loading,
   Modal,
   PageHeader,
+  RowActions,
   Select,
   Textarea,
 } from '../components/ui.jsx'
@@ -28,6 +33,7 @@ export default function Categories() {
   const [error, setError] = useState('')
   const [flash, setFlash] = useState('')
   const [mode, setMode] = useState(null) // add | edit
+  const [viewing, setViewing] = useState(null)
   const [active, setActive] = useState(null)
   const [form, setForm] = useState(emptyForm)
   const [q, setQ] = useState('')
@@ -145,7 +151,7 @@ export default function Categories() {
         title="Categories"
         subtitle="Manage parent categories that group services on the public site."
         actions={
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-nowrap gap-2">
             <Button onClick={openAdd}>
               <Plus className="mr-1.5 size-4" />
               Add category
@@ -187,7 +193,7 @@ export default function Categories() {
               <th className="px-4 py-3">Slug</th>
               <th className="px-4 py-3">Sort</th>
               <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Actions</th>
+              <th className="sticky right-0 z-20 bg-slate-50 px-4 py-3 text-right shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -212,15 +218,12 @@ export default function Categories() {
                     {c.isActive === false ? 'Inactive' : 'Active'}
                   </span>
                 </td>
-                <td className="px-4 py-3">
-                  <div className="flex flex-wrap gap-2">
-                    <Button variant="secondary" onClick={() => openEdit(c)}>
-                      Edit
-                    </Button>
-                    <Button variant="danger" onClick={() => remove(c)}>
-                      Delete
-                    </Button>
-                  </div>
+                <td className="sticky right-0 bg-white px-4 py-3 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">
+                  <RowActions>
+                    <ViewAction onClick={() => setViewing(c)} />
+                    <EditAction onClick={() => openEdit(c)} />
+                    <DeleteAction onClick={() => remove(c)} />
+                  </RowActions>
                 </td>
               </tr>
             ))}
@@ -234,6 +237,42 @@ export default function Categories() {
           </tbody>
         </table>
       </div>
+
+      <Modal
+        open={!!viewing}
+        title={viewing ? `Category · ${viewing.name}` : 'Category'}
+        onClose={() => setViewing(null)}
+      >
+        {viewing ? (
+          <div className="space-y-4">
+            <DetailGrid
+              items={[
+                { label: 'Name', value: viewing.name },
+                { label: 'Slug', value: viewing.slug },
+                { label: 'Status', value: viewing.isActive === false ? 'Inactive' : 'Active' },
+                { label: 'Sort order', value: viewing.sortOrder ?? 0 },
+                { label: 'Icon', value: viewing.icon },
+                { label: 'Services', value: viewing._count?.services ?? viewing.services?.length },
+                { label: 'Description', value: viewing.description, wide: true },
+              ]}
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => setViewing(null)}>
+                Close
+              </Button>
+              <Button
+                onClick={() => {
+                  const row = viewing
+                  setViewing(null)
+                  openEdit(row)
+                }}
+              >
+                Edit category
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
 
       <Modal
         open={mode === 'add' || mode === 'edit'}

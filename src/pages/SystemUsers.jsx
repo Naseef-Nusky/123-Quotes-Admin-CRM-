@@ -4,11 +4,16 @@ import { useAuth } from '../context/auth.js'
 import DeleteAllButton from '../components/DeleteAllButton.jsx'
 import {
   Button,
+  DeleteAction,
+  DetailGrid,
+  EditAction,
   ErrorBanner,
+  ViewAction,
   Input,
   Loading,
   Modal,
   PageHeader,
+  RowActions,
   Select,
   StatusBadge,
   formatDate,
@@ -44,6 +49,7 @@ export default function SystemUsers() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
+  const [viewing, setViewing] = useState(null)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState(emptyForm)
 
@@ -229,7 +235,7 @@ export default function SystemUsers() {
         title="System Users"
         subtitle="Manage admins and super admins for the control panel."
         actions={
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-nowrap gap-2">
             <Button variant="secondary" onClick={load}>
               Refresh
             </Button>
@@ -291,7 +297,7 @@ export default function SystemUsers() {
                   <th className="px-4 py-3 font-semibold">Role</th>
                   <th className="px-4 py-3 font-semibold">Status</th>
                   <th className="px-4 py-3 font-semibold">Created</th>
-                  <th className="px-4 py-3 font-semibold">Actions</th>
+                  <th className="sticky right-0 z-20 bg-slate-50 px-4 py-3 font-semibold text-right shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -322,33 +328,28 @@ export default function SystemUsers() {
                       )}
                     </td>
                     <td className="px-4 py-3 text-slate-600">{formatDate(u.createdAt)}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          variant="secondary"
+                    <td className="sticky right-0 bg-white px-4 py-3 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">
+                      <RowActions>
+                        <ViewAction onClick={() => setViewing(u)} />
+                        <EditAction
                           onClick={() => openEdit(u)}
                           disabled={u.role === 'SUPER_ADMIN'}
                           title={
                             u.role === 'SUPER_ADMIN'
                               ? 'Super admin details cannot be edited'
-                              : undefined
+                              : 'Edit'
                           }
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          variant="danger"
+                        />
+                        <DeleteAction
                           onClick={() => handleDelete(u)}
                           disabled={!canDelete(u)}
                           title={
                             u.role === 'SUPER_ADMIN'
                               ? 'Super admin accounts cannot be removed'
-                              : undefined
+                              : 'Delete'
                           }
-                        >
-                          Delete
-                        </Button>
-                      </div>
+                        />
+                      </RowActions>
                     </td>
                   </tr>
                 ))}
@@ -364,6 +365,43 @@ export default function SystemUsers() {
           </div>
         </div>
       )}
+
+      <Modal
+        open={!!viewing}
+        title={viewing ? `System user · ${viewing.email}` : 'System user'}
+        onClose={() => setViewing(null)}
+      >
+        {viewing ? (
+          <div className="space-y-4">
+            <DetailGrid
+              items={[
+                { label: 'Name', value: displayName(viewing) },
+                { label: 'Email', value: viewing.email },
+                { label: 'Role', value: viewing.role },
+                { label: 'Status', value: viewing.status },
+                { label: 'Created', value: formatDate(viewing.createdAt) },
+                { label: 'Last login', value: formatDate(viewing.lastLoginAt) },
+              ]}
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => setViewing(null)}>
+                Close
+              </Button>
+              {viewing.role !== 'SUPER_ADMIN' ? (
+                <Button
+                  onClick={() => {
+                    const row = viewing
+                    setViewing(null)
+                    openEdit(row)
+                  }}
+                >
+                  Edit user
+                </Button>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+      </Modal>
 
       <Modal
         open={modalOpen}
