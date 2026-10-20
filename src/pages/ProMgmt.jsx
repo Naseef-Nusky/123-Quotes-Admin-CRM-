@@ -11,6 +11,7 @@ import {
   DetailGrid,
   EditAction,
   ErrorBanner,
+  FilterSelect,
   Input,
   Loading,
   Modal,
@@ -205,11 +206,19 @@ export default function ProMgmt() {
     }
   }, [selectedId, services, loadQuestions])
 
+  const [categoryFilter, setCategoryFilter] = useState('')
+
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase()
-    if (!term) return services
-    return services.filter((s) => s.name.toLowerCase().includes(term))
-  }, [services, q])
+    return services.filter((s) => {
+      if (categoryFilter && s.categoryId !== categoryFilter) return false
+      if (!term) return true
+      return (
+        s.name.toLowerCase().includes(term) ||
+        (s.description || '').toLowerCase().includes(term)
+      )
+    })
+  }, [services, q, categoryFilter])
 
   const selected = services.find((s) => s.id === selectedId) || filtered[0] || null
 
@@ -430,16 +439,28 @@ export default function ProMgmt() {
       <ErrorBanner message={error} />
       {loading ? <Loading className="mb-4 py-6" /> : null}
 
-      <div className="mb-4">
-        <div className="relative max-w-md">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <div className="relative w-full max-w-md">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
           <input
             className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:border-blue focus:ring-2 focus:ring-blue/20"
-            placeholder="Search services or questions…"
+            placeholder="Search services…"
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
         </div>
+        <FilterSelect
+          label="Category"
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+        >
+          <option value="">All categories</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </FilterSelect>
       </div>
 
       <div className="grid gap-4 lg:h-[calc(100vh-14rem)] lg:min-h-[520px] lg:grid-cols-[280px_1fr]">

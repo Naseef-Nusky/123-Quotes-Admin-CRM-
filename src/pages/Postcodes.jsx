@@ -9,6 +9,7 @@ import {
   DetailGrid,
   EditAction,
   ErrorBanner,
+  FilterSelect,
   Input,
   Loading,
   Modal,
@@ -37,6 +38,10 @@ export default function Postcodes() {
   const [form, setForm] = useState(emptyForm)
   const [q, setQ] = useState('')
   const [search, setSearch] = useState('')
+  const [countryFilter, setCountryFilter] = useState('')
+
+  const countryOptions = [...new Set(rows.map((r) => r.country).filter(Boolean))].sort()
+  const visibleRows = countryFilter ? rows.filter((r) => r.country === countryFilter) : rows
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -170,36 +175,52 @@ export default function Postcodes() {
       <ErrorBanner message={error && !mode ? error : ''} />
 
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <input
-          className="w-full max-w-md rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue focus:ring-2 focus:ring-blue/20"
-          placeholder="Search outcode, town, or region…"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-        />
-        <p className="text-xs text-slate-500">{total ? `${total} results` : '0 results'}</p>
+        <div className="flex flex-wrap items-center gap-3">
+          <input
+            className="w-full max-w-md rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue focus:ring-2 focus:ring-blue/20"
+            placeholder="Search outcode, town, or region…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+          />
+          <FilterSelect
+            label="Country"
+            value={countryFilter}
+            onChange={(e) => setCountryFilter(e.target.value)}
+          >
+            <option value="">All countries</option>
+            {countryOptions.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </FilterSelect>
+        </div>
+        <p className="text-xs text-slate-500">
+          {visibleRows.length} of {total || rows.length} results
+        </p>
       </div>
 
       {loading ? <Loading className="mb-3 py-6" /> : null}
 
-      <div className="max-h-[70vh] overflow-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table className="w-full min-w-[760px] text-left text-sm">
+      <div className="max-h-[70vh] overflow-x-hidden overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <table className="w-full text-left text-[13px] [&_td]:[overflow-wrap:anywhere]">
           <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
             <tr>
-              <th className="px-4 py-3">Outcode</th>
-              <th className="px-4 py-3">Town</th>
-              <th className="px-4 py-3">Region</th>
-              <th className="px-4 py-3">Country</th>
-              <th className="sticky right-0 z-20 bg-slate-50 px-4 py-3 text-right shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">Actions</th>
+              <th className="px-2.5 py-2.5">Outcode</th>
+              <th className="px-2.5 py-2.5">Town</th>
+              <th className="px-2.5 py-2.5">Region</th>
+              <th className="px-2.5 py-2.5">Country</th>
+              <th className="sticky right-0 z-20 bg-slate-50 px-2.5 py-2.5 text-right shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
+            {visibleRows.map((row) => (
               <tr key={row.id} className="border-t border-slate-100">
-                <td className="px-4 py-3 font-semibold text-navy">{row.outcode}</td>
-                <td className="px-4 py-3 text-slate-700">{row.town || '—'}</td>
-                <td className="px-4 py-3 text-slate-600">{row.region || '—'}</td>
-                <td className="px-4 py-3 text-slate-600">{row.country || '—'}</td>
-                <td className="sticky right-0 bg-white px-4 py-3 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">
+                <td className="px-2.5 py-2.5 font-semibold text-navy">{row.outcode}</td>
+                <td className="px-2.5 py-2.5 text-slate-700">{row.town || '—'}</td>
+                <td className="px-2.5 py-2.5 text-slate-600">{row.region || '—'}</td>
+                <td className="px-2.5 py-2.5 text-slate-600">{row.country || '—'}</td>
+                <td className="sticky right-0 bg-white px-2.5 py-2.5 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">
                   <RowActions>
                     <ViewAction onClick={() => setViewing(row)} />
                     <EditAction onClick={() => openEdit(row)} />
@@ -208,7 +229,7 @@ export default function Postcodes() {
                 </td>
               </tr>
             ))}
-            {!rows.length && !loading ? (
+            {!visibleRows.length && !loading ? (
               <tr>
                 <td colSpan={5} className="px-4 py-6 text-center text-slate-500">
                   No postcodes found. Add an outcode or import the UK list.

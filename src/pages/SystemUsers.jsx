@@ -287,29 +287,29 @@ export default function SystemUsers() {
         <Loading />
       ) : (
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="max-h-[70vh] overflow-auto">
-            <table className="w-full min-w-[820px] text-left text-sm">
+          <div className="max-h-[70vh] overflow-x-hidden overflow-y-auto">
+            <table className="w-full text-left text-[13px] [&_td]:[overflow-wrap:anywhere]">
               <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
                 <tr>
-                  <th className="px-4 py-3 font-semibold">#</th>
-                  <th className="px-4 py-3 font-semibold">Name</th>
-                  <th className="px-4 py-3 font-semibold">Email</th>
-                  <th className="px-4 py-3 font-semibold">Role</th>
-                  <th className="px-4 py-3 font-semibold">Status</th>
-                  <th className="px-4 py-3 font-semibold">Created</th>
-                  <th className="sticky right-0 z-20 bg-slate-50 px-4 py-3 font-semibold text-right shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">Actions</th>
+                  <th className="px-2.5 py-2.5 font-semibold">#</th>
+                  <th className="px-2.5 py-2.5 font-semibold">Name</th>
+                  <th className="px-2.5 py-2.5 font-semibold">Email</th>
+                  <th className="px-2.5 py-2.5 font-semibold">Role</th>
+                  <th className="px-2.5 py-2.5 font-semibold">Status</th>
+                  <th className="px-2.5 py-2.5 font-semibold">Created</th>
+                  <th className="sticky right-0 z-20 bg-slate-50 px-2.5 py-2.5 font-semibold text-right shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.map((u, idx) => (
                   <tr key={u.id} className="border-t border-slate-100 hover:bg-slate-50/80">
-                    <td className="px-4 py-3 text-navy">{idx + 1}</td>
-                    <td className="px-4 py-3 font-medium text-navy">{displayName(u)}</td>
-                    <td className="px-4 py-3 text-navy">{u.email}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-2.5 py-2.5 text-navy">{idx + 1}</td>
+                    <td className="px-2.5 py-2.5 font-medium text-navy">{displayName(u)}</td>
+                    <td className="px-2.5 py-2.5 text-navy">{u.email}</td>
+                    <td className="px-2.5 py-2.5">
                       <StatusBadge status={u.role} />
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-2.5 py-2.5">
                       {u.role === 'SUPER_ADMIN' ? (
                         <StatusBadge status={u.status} />
                       ) : (
@@ -327,8 +327,8 @@ export default function SystemUsers() {
                         </select>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-slate-600">{formatDate(u.createdAt)}</td>
-                    <td className="sticky right-0 bg-white px-4 py-3 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">
+                    <td className="whitespace-nowrap px-2.5 py-2.5 text-slate-600">{formatDate(u.createdAt)}</td>
+                    <td className="sticky right-0 bg-white px-2.5 py-2.5 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">
                       <RowActions>
                         <ViewAction onClick={() => setViewing(u)} />
                         <EditAction

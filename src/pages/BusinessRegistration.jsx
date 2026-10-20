@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api } from '../api/client.js'
 import { mapBusinessApplication } from '../lib/mappers.js'
 import BusinessAddWizard from '../components/BusinessAddWizard.jsx'
 import DeleteAllButton from '../components/DeleteAllButton.jsx'
-import { ActionIconButton, Button, Card, ErrorBanner, Loading, Modal, PageHeader, RowActions, ViewAction } from '../components/ui.jsx'
+import { ActionIconButton, Button, Card, ErrorBanner, FilterSelect, Loading, Modal, PageHeader, RowActions, ViewAction } from '../components/ui.jsx'
 import { Check, Plus, X } from 'lucide-react'
 
 export default function BusinessRegistration() {
@@ -13,6 +13,20 @@ export default function BusinessRegistration() {
   const [flash, setFlash] = useState('')
   const [mode, setMode] = useState(null) // add | view
   const [active, setActive] = useState(null)
+  const [q, setQ] = useState('')
+  const [typeFilter, setTypeFilter] = useState('')
+
+  const visibleRegs = useMemo(() => {
+    const term = q.trim().toLowerCase()
+    return regs.filter((r) => {
+      if (typeFilter === 'new' && r.isAdditional) return false
+      if (typeFilter === 'additional' && !r.isAdditional) return false
+      if (!term) return true
+      return [r.name, r.contact, r.contactName, r.email, r.service]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(term))
+    })
+  }, [regs, q, typeFilter])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -105,27 +119,41 @@ export default function BusinessRegistration() {
       {flash ? <p className="mb-3 text-sm font-semibold text-ok">{flash}</p> : null}
       <ErrorBanner message={error} />
       {loading ? <Loading className="mb-3 py-6" /> : null}
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <input
+          className="w-full max-w-md rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue focus:ring-2 focus:ring-blue/20"
+          placeholder="Search business, contact, email, service…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+        />
+        <FilterSelect label="Type" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+          <option value="">All types</option>
+          <option value="new">New</option>
+          <option value="additional">Additional</option>
+        </FilterSelect>
+        <p className="text-xs text-slate-500">{visibleRegs.length} result(s)</p>
+      </div>
       <Card className="overflow-hidden p-0">
-        <div className="max-h-[70vh] overflow-auto">
-        <table className="w-full min-w-[900px] text-left text-sm">
+        <div className="max-h-[70vh] overflow-x-hidden overflow-y-auto">
+        <table className="w-full text-left text-[13px] [&_td]:[overflow-wrap:anywhere]">
           <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
             <tr>
-              <th className="px-4 py-3">Business</th>
-              <th className="px-4 py-3">Contact</th>
-              <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3">Service</th>
-              <th className="px-4 py-3">Type</th>
-              <th className="sticky right-0 z-20 bg-slate-50 px-4 py-3 text-right shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">Actions</th>
+              <th className="px-2.5 py-2.5">Business</th>
+              <th className="px-2.5 py-2.5">Contact</th>
+              <th className="px-2.5 py-2.5">Email</th>
+              <th className="px-2.5 py-2.5">Service</th>
+              <th className="px-2.5 py-2.5">Type</th>
+              <th className="sticky right-0 z-20 bg-slate-50 px-2.5 py-2.5 text-right shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {regs.map((r) => (
+            {visibleRegs.map((r) => (
               <tr key={r.id} className="border-t border-slate-100">
-                <td className="px-4 py-3 font-medium text-navy">{r.name}</td>
-                <td className="px-4 py-3">{r.contact}</td>
-                <td className="px-4 py-3">{r.email}</td>
-                <td className="px-4 py-3">{r.service}</td>
-                <td className="px-4 py-3">
+                <td className="px-2.5 py-2.5 font-medium text-navy">{r.name}</td>
+                <td className="px-2.5 py-2.5">{r.contact}</td>
+                <td className="px-2.5 py-2.5">{r.email}</td>
+                <td className="px-2.5 py-2.5">{r.service}</td>
+                <td className="px-2.5 py-2.5">
                   <span
                     className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                       r.isAdditional
@@ -136,7 +164,7 @@ export default function BusinessRegistration() {
                     {r.isAdditional ? 'Additional' : 'New'}
                   </span>
                 </td>
-                <td className="sticky right-0 bg-white px-4 py-3 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">
+                <td className="sticky right-0 bg-white px-2.5 py-2.5 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">
                   <RowActions>
                     <ViewAction onClick={() => openView(r)} />
                     <ActionIconButton label="Approve" variant="primary" onClick={() => approve(r.id)}>
@@ -149,10 +177,10 @@ export default function BusinessRegistration() {
                 </td>
               </tr>
             ))}
-            {!regs.length && !loading ? (
+            {!visibleRegs.length && !loading ? (
               <tr>
                 <td colSpan={6} className="px-4 py-6 text-center text-slate-500">
-                  No pending applications.
+                  {regs.length ? 'No applications match your filters.' : 'No pending applications.'}
                 </td>
               </tr>
             ) : null}

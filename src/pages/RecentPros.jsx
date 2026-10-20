@@ -69,12 +69,10 @@ export default function RecentPros() {
   const list = useMemo(() => {
     const term = q.trim().toLowerCase()
     if (!term) return rows
-    return rows.filter(
-      (p) =>
-        p.name.toLowerCase().includes(term) ||
-        p.email.toLowerCase().includes(term) ||
-        p.type.toLowerCase().includes(term) ||
-        p.company.toLowerCase().includes(term),
+    return rows.filter((p) =>
+      [p.name, p.email, p.phone, p.type, p.company, p.status]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(term)),
     )
   }, [q, rows])
 

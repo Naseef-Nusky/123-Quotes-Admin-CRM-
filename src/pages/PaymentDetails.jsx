@@ -7,6 +7,7 @@ import {
   ErrorBanner,
   Loading,
   Modal,
+  FilterSelect,
   PageHeader,
   RowActions,
   ViewAction,
@@ -62,7 +63,11 @@ export default function PaymentDetails({ variant = 'recent' }) {
   const [rows, setRows] = useState([])
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
+  const [statusFilter, setStatusFilter] = useState('')
   const [active, setActive] = useState(null)
+
+  const statusOptions = [...new Set(rows.map((r) => r.status).filter(Boolean))].sort()
+  const visibleRows = statusFilter ? rows.filter((r) => r.status === statusFilter) : rows
 
   useEffect(() => {
     let cancelled = false
@@ -144,8 +149,22 @@ export default function PaymentDetails({ variant = 'recent' }) {
       <DataTable
         title={isPurchases ? 'Recent purchases' : 'Square Payments'}
         columns={columns}
-        rows={rows}
+        rows={visibleRows}
         searchKeys={searchKeys}
+        filters={
+          <FilterSelect
+            label="Status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="">All statuses</option>
+            {statusOptions.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </FilterSelect>
+        }
       />
 
       <Modal open={!!active} title="Payment details" onClose={() => setActive(null)}>

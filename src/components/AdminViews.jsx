@@ -213,11 +213,10 @@ export function LeadSplitView({
 
     const term = q.trim().toLowerCase()
     if (term) {
-      rows = rows.filter(
-        (l) =>
-          l.name.toLowerCase().includes(term) ||
-          l.service.toLowerCase().includes(term) ||
-          l.email.toLowerCase().includes(term),
+      rows = rows.filter((l) =>
+        [l.name, l.service, l.email, l.phone, l.postcodeRaw, l.postcode, l.status]
+          .filter(Boolean)
+          .some((v) => String(v).toLowerCase().includes(term)),
       )
     }
     return rows
@@ -667,15 +666,37 @@ export function LeadSplitView({
   )
 }
 
-export function DataTable({ title, columns, rows, searchKeys = [] }) {
+function flattenSearchText(value, depth = 0, out = []) {
+  if (value == null || depth > 3) return out
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    out.push(String(value))
+    return out
+  }
+  if (Array.isArray(value)) {
+    value.slice(0, 20).forEach((v) => flattenSearchText(v, depth + 1, out))
+    return out
+  }
+  if (typeof value === 'object') {
+    Object.values(value).forEach((v) => flattenSearchText(v, depth + 1, out))
+  }
+  return out
+}
+
+export function DataTable({ title, columns, rows, searchKeys = [], filters = null }) {
   const [q, setQ] = useState('')
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase()
     if (!term) return rows
-    return rows.filter((row) =>
-      searchKeys.some((key) => String(row[key] || '').toLowerCase().includes(term)),
-    )
+    return rows.filter((row) => {
+      // Explicit keys first…
+      if (searchKeys.some((key) => String(row[key] || '').toLowerCase().includes(term))) {
+        return true
+      }
+      // …then every visible value on the row, so search always works
+      // even when a page passes no (or partial) searchKeys.
+      return flattenSearchText(row).join(' ').toLowerCase().includes(term)
+    })
   }, [rows, q, searchKeys])
 
   const total = filtered.length
@@ -688,27 +709,38 @@ export function DataTable({ title, columns, rows, searchKeys = [] }) {
           <p className="text-sm text-slate-600">
             {total} {total === 1 ? 'entry' : 'entries'}
           </p>
-          <label className="text-sm text-slate-600">
-            Search:{' '}
-            <input
-              className="ml-1 rounded-md border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-blue"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
-          </label>
+          <div className="flex flex-wrap items-center gap-3">
+            {filters}
+            <label className="text-sm text-slate-600">
+              Search:{' '}
+              <input
+                className="ml-1 rounded-md border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-blue"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search…"
+              />
+            </label>
+            {q ? (
+              <button
+                type="button"
+                className="text-xs font-semibold text-blue hover:underline"
+                onClick={() => setQ('')}
+              >
+                Clear
+              </button>
+            ) : null}
+          </div>
         </div>
 
-        <div className="max-h-[70vh] overflow-auto">
-          <table className="w-full min-w-[720px] text-left text-sm">
+        <div className="max-h-[70vh] overflow-x-hidden overflow-y-auto">
+          <table className="w-full text-left text-[13px] [&_td]:[overflow-wrap:anywhere]">
             <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
               <tr>
                 {columns.map((c) => (
                   <th
                     key={c.key}
-                    className={`px-4 py-3 font-semibold whitespace-nowrap ${
-                      c.key === 'action' || c.key === 'actions'
-                        ? 'sticky right-0 z-20 bg-slate-50 text-right shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]'
-                        : ''
+                    className={`px-2.5 py-2.5 font-semibold whitespace-nowrap ${
+                      c.key === 'action' || c.key === 'actions' ? 'text-right' : ''
                     }`}
                   >
                     {c.label}
@@ -722,10 +754,12 @@ export function DataTable({ title, columns, rows, searchKeys = [] }) {
                   {columns.map((c) => (
                     <td
                       key={c.key}
-                      className={`px-4 py-3 text-navy ${
+                      className={`px-2.5 py-2.5 text-navy ${
                         c.key === 'action' || c.key === 'actions'
-                          ? 'sticky right-0 bg-white whitespace-nowrap shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]'
-                          : ''
+                          ? 'whitespace-nowrap'
+                          : /date|created|joined/i.test(`${c.key} ${c.label || ''}`)
+                            ? 'whitespace-nowrap'
+                            : ''
                       }`}
                     >
                       {c.render ? c.render(row, idx) : row[c.key]}

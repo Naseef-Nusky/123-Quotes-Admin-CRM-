@@ -8,7 +8,7 @@ import {
   serializeUnlockTiers,
 } from '../components/UnlockTokenTiersForm.jsx'
 import DeleteAllButton from '../components/DeleteAllButton.jsx'
-import { ActionIconButton, Button, DeleteAction, DetailGrid, EditAction, ErrorBanner, Input, Loading, Modal, PageHeader, RowActions, Select, ViewAction } from '../components/ui.jsx'
+import { ActionIconButton, Button, DeleteAction, DetailGrid, EditAction, ErrorBanner, FilterSelect, Input, Loading, Modal, PageHeader, RowActions, Select, ViewAction } from '../components/ui.jsx'
 import { Coins } from 'lucide-react'
 import {
   DEFAULT_COUNTRY_CODE,
@@ -23,6 +23,23 @@ const LEAD_STATUSES = ['OPEN', 'MATCHED', 'PARTIALLY_UNLOCKED', 'CLOSED', 'CANCE
 export default function Leads() {
   const { leads, loading, error, deleteLead, deleteAllLeads, updateLead, unlockTiers } =
     useAdminLeads()
+  const [statusFilter, setStatusFilter] = useState('')
+  const [contactFilter, setContactFilter] = useState('')
+  const [serviceFilter, setServiceFilter] = useState('')
+
+  const serviceOptions = [...new Set((leads || []).map((l) => l.service).filter(Boolean))].sort()
+  const visibleLeads = (leads || []).filter((l) => {
+    if (statusFilter && l.status !== statusFilter) return false
+    if (serviceFilter && l.service !== serviceFilter) return false
+    if (contactFilter === 'email' && !(l.email && l.email !== '—')) return false
+    if (contactFilter === 'phone' && !(l.phone && l.phone !== '—')) return false
+    if (
+      contactFilter === 'none' &&
+      ((l.email && l.email !== '—') || (l.phone && l.phone !== '—'))
+    )
+      return false
+    return true
+  })
   const [editing, setEditing] = useState(null)
   const [viewing, setViewing] = useState(null)
   const [tokenLead, setTokenLead] = useState(null)
@@ -220,8 +237,59 @@ export default function Leads() {
       <DataTable
         title="Leads"
         columns={columns}
-        rows={leads}
-        searchKeys={['name', 'email', 'phone', 'service']}
+        rows={visibleLeads}
+        searchKeys={['name', 'email', 'phone', 'service', 'postcodeRaw', 'status', 'date']}
+        filters={
+          <>
+            <FilterSelect
+              label="Status"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
+              <option value="">All statuses</option>
+              {LEAD_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </FilterSelect>
+            <FilterSelect
+              label="Service"
+              value={serviceFilter}
+              onChange={(e) => setServiceFilter(e.target.value)}
+            >
+              <option value="">All services</option>
+              {serviceOptions.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </FilterSelect>
+            <FilterSelect
+              label="Contact"
+              value={contactFilter}
+              onChange={(e) => setContactFilter(e.target.value)}
+            >
+              <option value="">All contacts</option>
+              <option value="email">With email</option>
+              <option value="phone">With phone</option>
+              <option value="none">No contact</option>
+            </FilterSelect>
+            {statusFilter || serviceFilter || contactFilter ? (
+              <button
+                type="button"
+                className="text-xs font-semibold text-blue hover:underline"
+                onClick={() => {
+                  setStatusFilter('')
+                  setServiceFilter('')
+                  setContactFilter('')
+                }}
+              >
+                Clear filters
+              </button>
+            ) : null}
+          </>
+        }
       />
 
       <Modal

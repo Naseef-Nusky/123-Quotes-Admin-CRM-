@@ -15,6 +15,7 @@ import {
   Modal,
   DeleteAction,
   EditAction,
+  FilterSelect,
   PageHeader,
   RowActions,
   ViewAction,
@@ -54,7 +55,10 @@ export default function Professionals() {
   const [error, setError] = useState('')
   const [flash, setFlash] = useState('')
   const [saving, setSaving] = useState(false)
+  const [statusFilter, setStatusFilter] = useState('')
   const [services, setServices] = useState([])
+
+  const visibleRows = statusFilter ? rows.filter((r) => r.status === statusFilter) : rows
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -231,8 +235,22 @@ export default function Professionals() {
       <DataTable
         title="Professional"
         columns={columns}
-        rows={rows}
-        searchKeys={['name', 'email', 'phone', 'type', 'company']}
+        rows={visibleRows}
+        searchKeys={['name', 'email', 'phone', 'type', 'company', 'status']}
+        filters={
+          <FilterSelect
+            label="Status"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="">All statuses</option>
+            {['ACTIVE', 'SUSPENDED', 'INACTIVE'].map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </FilterSelect>
+        }
       />
 
       <BusinessAddWizard

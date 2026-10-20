@@ -263,7 +263,7 @@ export default function Customers() {
       <ErrorBanner message={error} />
       {loading ? <Loading className="mb-3 py-6" /> : null}
 
-      <DataTable title="Customers" columns={columns} rows={filtered} searchKeys={[]} />
+      <DataTable title="Customers" columns={columns} rows={filtered} searchKeys={['email', 'status']} />
 
       <Modal
         open={mode === 'add' || mode === 'edit'}

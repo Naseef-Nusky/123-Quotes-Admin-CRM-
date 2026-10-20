@@ -8,6 +8,7 @@ import {
   DetailGrid,
   EditAction,
   ErrorBanner,
+  FilterSelect,
   ViewAction,
   Input,
   Loading,
@@ -51,6 +52,7 @@ export default function TokenPackages() {
   const [active, setActive] = useState(null)
   const [form, setForm] = useState(emptyForm)
   const [q, setQ] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -72,14 +74,17 @@ export default function TokenPackages() {
 
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase()
-    if (!term) return packages
-    return packages.filter(
-      (p) =>
+    return packages.filter((p) => {
+      if (statusFilter === 'active' && p.isActive === false) return false
+      if (statusFilter === 'inactive' && p.isActive !== false) return false
+      if (!term) return true
+      return (
         p.name?.toLowerCase().includes(term) ||
         p.description?.toLowerCase().includes(term) ||
-        String(p.tokens).includes(term),
-    )
-  }, [packages, q])
+        String(p.tokens).includes(term)
+      )
+    })
+  }, [packages, q, statusFilter])
 
   function openAdd() {
     setMode('add')
@@ -204,44 +209,54 @@ export default function TokenPackages() {
       {flash ? <p className="mb-3 text-sm font-semibold text-ok">{flash}</p> : null}
       <ErrorBanner message={error && !mode ? error : ''} />
 
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <input
           className="w-full max-w-md rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus:border-blue focus:ring-2 focus:ring-blue/20"
           placeholder="Search packages…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
         />
+        <FilterSelect
+          label="Status"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="">All statuses</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </FilterSelect>
+        <p className="text-xs text-slate-500">{filtered.length} result(s)</p>
       </div>
 
       {loading ? <Loading className="mb-3 py-6" /> : null}
 
-      <div className="max-h-[70vh] overflow-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-        <table className="w-full text-left text-sm">
+      <div className="max-h-[70vh] overflow-x-hidden overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+        <table className="w-full text-left text-[13px] [&_td]:[overflow-wrap:anywhere]">
           <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
             <tr>
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Tokens</th>
-              <th className="px-4 py-3">Price</th>
-              <th className="px-4 py-3">Sort</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="sticky right-0 z-20 bg-slate-50 px-4 py-3 text-right shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">Actions</th>
+              <th className="px-2.5 py-2.5">Name</th>
+              <th className="px-2.5 py-2.5">Tokens</th>
+              <th className="px-2.5 py-2.5">Price</th>
+              <th className="px-2.5 py-2.5">Sort</th>
+              <th className="px-2.5 py-2.5">Status</th>
+              <th className="sticky right-0 z-20 bg-slate-50 px-2.5 py-2.5 text-right shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">Actions</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map((pkg) => (
               <tr key={pkg.id} className="border-t border-slate-100">
-                <td className="px-4 py-3">
+                <td className="px-2.5 py-2.5">
                   <p className="font-medium text-navy">{pkg.name}</p>
                   {pkg.description ? (
                     <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">{pkg.description}</p>
                   ) : null}
                 </td>
-                <td className="px-4 py-3 font-semibold text-navy">{pkg.tokens}</td>
-                <td className="px-4 py-3 text-slate-700">
+                <td className="px-2.5 py-2.5 font-semibold text-navy">{pkg.tokens}</td>
+                <td className="px-2.5 py-2.5 text-slate-700">
                   {formatMoney(pkg.priceCents, pkg.currency)}
                 </td>
-                <td className="px-4 py-3">{pkg.sortOrder ?? 0}</td>
-                <td className="px-4 py-3">
+                <td className="px-2.5 py-2.5">{pkg.sortOrder ?? 0}</td>
+                <td className="px-2.5 py-2.5">
                   <span
                     className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
                       pkg.isActive === false
@@ -252,7 +267,7 @@ export default function TokenPackages() {
                     {pkg.isActive === false ? 'Inactive' : 'Active'}
                   </span>
                 </td>
-                <td className="sticky right-0 bg-white px-4 py-3 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">
+                <td className="sticky right-0 bg-white px-2.5 py-2.5 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">
                   <RowActions>
                     <ViewAction onClick={() => setViewing(pkg)} />
                     <EditAction onClick={() => openEdit(pkg)} />
