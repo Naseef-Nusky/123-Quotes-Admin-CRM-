@@ -2,29 +2,31 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Lock, Unlock } from 'lucide-react'
 import { api } from '../api/client.js'
-import { Button, Card, ErrorBanner } from '../components/ui.jsx'
+import { Button, Card, ErrorBanner, RefreshButton } from '../components/ui.jsx'
 
 export default function Dashboard() {
   const [locked, setLocked] = useState(false)
   const [stats, setStats] = useState(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  async function load() {
+    setLoading(true)
+    setError('')
+    try {
+      const dash = await api.getDashboard()
+      setStats(dash.stats || null)
+      setLocked(Boolean(dash.leadViewLocked))
+    } catch (err) {
+      setError(err.message || 'Failed to load dashboard')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    let cancelled = false
-    api
-      .getDashboard()
-      .then((dash) => {
-        if (cancelled) return
-        setStats(dash.stats || null)
-        setLocked(Boolean(dash.leadViewLocked))
-      })
-      .catch((err) => {
-        if (!cancelled) setError(err.message || 'Failed to load dashboard')
-      })
-    return () => {
-      cancelled = true
-    }
+    load()
   }, [])
 
   async function toggleLock() {
@@ -55,6 +57,9 @@ export default function Dashboard() {
             </Link>{' '}
             tab.
           </p>
+          <div className="mt-3">
+            <RefreshButton onClick={load} loading={loading} />
+          </div>
         </div>
         <Card className="p-4">
           <p className="text-sm font-semibold text-navy">Lock Lead View :</p>

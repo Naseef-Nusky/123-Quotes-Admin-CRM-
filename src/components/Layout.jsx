@@ -85,13 +85,14 @@ export default function Layout({ children }) {
     <div className="flex h-full flex-col">
       <div className="border-b border-white/10 px-5 py-5">
         <div className="flex items-center gap-3">
-          <div className="flex size-11 items-center justify-center rounded-xl bg-white/95 p-1.5 shadow-sm">
-            <img src="/logo.png" alt="123 Quotes" className="h-full w-full object-contain" />
+          <div className="flex h-12 flex-1 items-center justify-center rounded-xl bg-white px-3 py-1.5 shadow-sm">
+            <img src="/logo.jpeg" alt="123 Quotes" className="h-full w-full object-contain" />
           </div>
-          <div>
-            <p className="text-base font-bold leading-tight text-white">123 Quotes</p>
-            <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-blue-200/80">Admin Panel</p>
-          </div>
+          <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-blue-200/80">
+            Admin
+            <br />
+            Panel
+          </p>
         </div>
       </div>
 

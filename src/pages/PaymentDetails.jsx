@@ -9,6 +9,7 @@ import {
   Modal,
   FilterSelect,
   PageHeader,
+  RefreshButton,
   RowActions,
   ViewAction,
   StatusBadge,
@@ -64,6 +65,7 @@ export default function PaymentDetails({ variant = 'recent' }) {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState('')
+  const [refreshKey, setRefreshKey] = useState(0)
   const [active, setActive] = useState(null)
 
   const statusOptions = [...new Set(rows.map((r) => r.status).filter(Boolean))].sort()
@@ -92,7 +94,7 @@ export default function PaymentDetails({ variant = 'recent' }) {
     return () => {
       cancelled = true
     }
-  }, [isPurchases])
+  }, [isPurchases, refreshKey])
 
   const columns = useMemo(
     () => [
@@ -133,7 +135,9 @@ export default function PaymentDetails({ variant = 'recent' }) {
         title={isPurchases ? 'Recent purchases' : 'Square Payments'}
         subtitle="Delete all permanently removes every payment record from the database."
         actions={
-          <DeleteAllButton
+          <>
+            <RefreshButton onClick={() => setRefreshKey((k) => k + 1)} loading={loading} />
+            <DeleteAllButton
             label="Delete all payments"
             confirmText="Permanently delete ALL payments from the database?\n\nType DELETE to confirm."
             onConfirm={async () => {
@@ -141,7 +145,8 @@ export default function PaymentDetails({ variant = 'recent' }) {
               window.alert(`Deleted ${data.count ?? 0} payment(s).`)
               setRows([])
             }}
-          />
+            />
+          </>
         }
       />
       <ErrorBanner message={error} />

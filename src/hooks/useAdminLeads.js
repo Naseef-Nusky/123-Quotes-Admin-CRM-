@@ -32,13 +32,8 @@ export function useAdminLeads() {
       const mapped = (leadsRes.leads || []).map((l) =>
         mapAdminLead(l, locked, maxUnlocks, tiers),
       )
-      // Show leads that have email/phone first (imported contacts), then newest
-      mapped.sort((a, b) => {
-        const aHas = a.email && a.email !== '—' ? 1 : 0
-        const bHas = b.email && b.email !== '—' ? 1 : 0
-        if (aHas !== bHas) return bHas - aHas
-        return (b.createdAtMs || 0) - (a.createdAtMs || 0)
-      })
+      // Newest first (newest → oldest) in every lead table
+      mapped.sort((a, b) => (b.createdAtMs || 0) - (a.createdAtMs || 0))
       setLeads(mapped)
     } catch (err) {
       setError(err.message || 'Failed to load leads')

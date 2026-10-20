@@ -3,7 +3,7 @@ import { api } from '../api/client.js'
 import { mapBusinessApplication } from '../lib/mappers.js'
 import BusinessAddWizard from '../components/BusinessAddWizard.jsx'
 import DeleteAllButton from '../components/DeleteAllButton.jsx'
-import { ActionIconButton, Button, Card, ErrorBanner, FilterSelect, Loading, Modal, PageHeader, RowActions, ViewAction } from '../components/ui.jsx'
+import { ActionIconButton, Button, Card, ErrorBanner, FilterSelect, Loading, Modal, PageHeader, RefreshButton, RowActions, ViewAction } from '../components/ui.jsx'
 import { Check, Plus, X } from 'lucide-react'
 
 export default function BusinessRegistration() {
@@ -100,6 +100,7 @@ export default function BusinessRegistration() {
         subtitle="Review every business application. Additional signups for existing emails appear here for approval too."
         actions={
           <div className="flex flex-nowrap gap-2">
+            <RefreshButton onClick={load} loading={loading} />
             <Button onClick={openAdd}>
               <Plus className="mr-1.5 size-4" />
               Add business

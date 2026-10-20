@@ -8,7 +8,7 @@ import {
   serializeUnlockTiers,
 } from '../components/UnlockTokenTiersForm.jsx'
 import DeleteAllButton from '../components/DeleteAllButton.jsx'
-import { ActionIconButton, Button, DeleteAction, DetailGrid, EditAction, ErrorBanner, FilterSelect, Input, Loading, Modal, PageHeader, RowActions, Select, ViewAction } from '../components/ui.jsx'
+import { ActionIconButton, Button, DeleteAction, DetailGrid, EditAction, ErrorBanner, FilterSelect, Input, Loading, Modal, PageHeader, RefreshButton, RowActions, Select, ViewAction } from '../components/ui.jsx'
 import { Coins } from 'lucide-react'
 import {
   DEFAULT_COUNTRY_CODE,
@@ -21,7 +21,7 @@ import { useAdminLeads } from '../hooks/useAdminLeads.js'
 const LEAD_STATUSES = ['OPEN', 'MATCHED', 'PARTIALLY_UNLOCKED', 'CLOSED', 'CANCELLED']
 
 export default function Leads() {
-  const { leads, loading, error, deleteLead, deleteAllLeads, updateLead, unlockTiers } =
+  const { leads, loading, error, deleteLead, deleteAllLeads, updateLead, unlockTiers, reload } =
     useAdminLeads()
   const [statusFilter, setStatusFilter] = useState('')
   const [contactFilter, setContactFilter] = useState('')
@@ -220,16 +220,18 @@ export default function Leads() {
     <div>
       <PageHeader
         title="All Leads"
-        subtitle={`${leads.filter((l) => l.email && l.email !== '—').length} leads have email/phone from the dump. Others had user_id=0 (no contact in SQL). Sorted with contacts first.`}
         actions={
-          <DeleteAllButton
+          <>
+            <RefreshButton onClick={reload} loading={loading} />
+            <DeleteAllButton
             label="Delete all leads"
             confirmText={`Permanently delete ALL ${leads.length} leads from the database?\n\nType DELETE to confirm.`}
             onConfirm={async () => {
               const data = await deleteAllLeads()
               window.alert(`Deleted ${data.count ?? 0} lead request(s).`)
             }}
-          />
+            />
+          </>
         }
       />
       <ErrorBanner message={error} />
@@ -338,16 +340,24 @@ export default function Leads() {
               <h3 className="mb-2 border-b border-slate-200 pb-2 text-sm font-bold uppercase tracking-wide text-navy">
                 Details Provided
               </h3>
-              <ul className="space-y-2 text-sm">
-                {(viewing.details || []).map((d, idx) => (
-                  <li key={d.questionId || `${d.q}-${idx}`}>
-                    <span className="text-slate-600">• {d.q}</span>{' '}
-                    {d.display || d.a ? (
-                      <span className="font-bold text-navy">{d.display || d.a}</span>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
+              {(viewing.details || []).length ? (
+                <ul className="space-y-2 text-sm">
+                  {viewing.details.map((d, idx) => (
+                    <li key={d.questionId || `${d.q}-${idx}`}>
+                      <span className="text-slate-600">• {d.q}</span>{' '}
+                      {d.display || d.a ? (
+                        <span className="font-bold text-navy">{d.display || d.a}</span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              ) : viewing.description ? (
+                <p className="whitespace-pre-line text-sm text-slate-600">{viewing.description}</p>
+              ) : (
+                <p className="text-sm text-slate-500">
+                  No details provided for this lead in the old DB.
+                </p>
+              )}
             </div>
             <div className="flex justify-end gap-2 pt-1">
               <Button variant="secondary" onClick={() => setViewing(null)}>

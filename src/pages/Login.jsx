@@ -57,7 +57,7 @@ export default function Login() {
         className="w-full max-w-md rounded-xl bg-white p-8 shadow-xl"
       >
         <div className="flex flex-col items-center text-center">
-          <img src="/logo.png" alt="123 Quotes" className="h-14 w-auto object-contain" />
+          <img src="/logo.jpeg" alt="123 Quotes" className="h-14 w-auto object-contain" />
           <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
             <LockKeyhole className="size-3.5" strokeWidth={2} />
             Admin CRM Login

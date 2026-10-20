@@ -14,6 +14,7 @@ import {
   Loading,
   Modal,
   PageHeader,
+  RefreshButton,
   RowActions,
   Select,
   Textarea,
@@ -189,6 +190,7 @@ export default function TokenPackages() {
         subtitle="Edit token packs shown when professionals recharge to reach out to leads."
         actions={
           <div className="flex flex-nowrap gap-2">
+            <RefreshButton onClick={load} loading={loading} />
             <Button onClick={openAdd}>
               <Plus className="mr-1.5 size-4" />
               Add package

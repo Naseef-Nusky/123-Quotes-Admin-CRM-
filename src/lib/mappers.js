@@ -25,10 +25,8 @@ export function formatDateTime(date) {
 }
 
 function maskPostcode(pc) {
-  if (!pc) return '—'
-  const clean = String(pc).replace(/\s+/g, '')
-  if (clean.length <= 3) return `${clean}****`
-  return `${clean.slice(0, 3)}****`
+  // Admin CRM is internal — show the full postcode, no masking.
+  return pc ? String(pc).trim() : '—'
 }
 
 function normalizeUnlockTiers(raw, fallbackCost = 1) {
@@ -237,7 +235,10 @@ export function mapAdminLead(lead, leadViewLocked = false, maxUnlocksPerLead = 0
     summary: lead.summary || '',
     details: details.length
       ? details
-      : [{ questionId: null, answerId: null, q: 'Summary', a: lead.summary || '', type: 'TEXTAREA', options: [] }],
+      : lead.summary
+        ? [{ questionId: null, answerId: null, q: 'Summary', a: lead.summary, display: lead.summary, type: 'TEXTAREA', options: [] }]
+        : [],
+    description: lead.request?.description || lead.summary || '',
   }
 }
 

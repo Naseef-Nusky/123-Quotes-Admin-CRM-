@@ -1,4 +1,4 @@
-import { Eye, Pencil, Trash2 } from 'lucide-react'
+import { Eye, Pencil, RefreshCw, Trash2 } from 'lucide-react'
 
 const badgeStyles = {
   ACTIVE: 'bg-emerald-50 text-ok',
@@ -86,6 +86,22 @@ export function DetailGrid({ items }) {
         </div>
       ))}
     </dl>
+  )
+}
+
+/** Refresh icon button shown in every page header. Spins while loading. */
+export function RefreshButton({ onClick, loading = false, label = 'Refresh' }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={loading}
+      title={label}
+      aria-label={label}
+      className="inline-flex size-9 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-navy transition touch-manipulation hover:bg-slate-50 active:scale-[0.97] disabled:opacity-50"
+    >
+      <RefreshCw className={`size-4 ${loading ? 'animate-spin' : ''}`} />
+    </button>
   )
 }
 

@@ -14,6 +14,7 @@ import {
   Loading,
   Modal,
   PageHeader,
+  RefreshButton,
   RowActions,
   Select,
   Textarea,
@@ -157,6 +158,7 @@ export default function Categories() {
         subtitle="Manage parent categories that group services on the public site."
         actions={
           <div className="flex flex-nowrap gap-2">
+            <RefreshButton onClick={load} loading={loading} />
             <Button onClick={openAdd}>
               <Plus className="mr-1.5 size-4" />
               Add category

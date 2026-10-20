@@ -16,6 +16,7 @@ import {
   Loading,
   Modal,
   PageHeader,
+  RefreshButton,
   RowActions,
   Select,
   Textarea,
@@ -416,6 +417,7 @@ export default function ProMgmt() {
         subtitle="Full control: create, edit, and delete services and questionnaire questions."
         actions={
           <div className="flex flex-nowrap gap-2">
+            <RefreshButton onClick={load} loading={loading} />
             <Button onClick={openAddCategory} disabled={saving || loading}>
               <Plus className="mr-1.5 size-4" />
               Add service

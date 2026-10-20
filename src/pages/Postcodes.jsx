@@ -14,6 +14,7 @@ import {
   Loading,
   Modal,
   PageHeader,
+  RefreshButton,
   RowActions,
   ViewAction,
 } from '../components/ui.jsx'
@@ -153,6 +154,7 @@ export default function Postcodes() {
         subtitle="Manage UK outcodes used for autocomplete and area matching."
         actions={
           <div className="flex flex-nowrap gap-2">
+            <RefreshButton onClick={load} loading={loading} />
             <Button onClick={openAdd}>
               <Plus className="mr-1.5 size-4" />
               Add postcode

@@ -13,7 +13,7 @@ import {
   formatIntlPhone,
   parseIntlPhone,
 } from '../data/countryDialCodes.js'
-import { ActionIconButton, Button, Card, DeleteAction, EditAction, Input, Loading, Modal, RowActions, Select, Textarea } from './ui.jsx'
+import { ActionIconButton, Button, Card, DeleteAction, DetailGrid, EditAction, Input, Loading, Modal, RowActions, Select, Textarea } from './ui.jsx'
 
 const LEAD_STATUSES = ['OPEN', 'MATCHED', 'PARTIALLY_UNLOCKED', 'CLOSED', 'CANCELLED']
 
@@ -381,6 +381,18 @@ export function LeadSplitView({
                     </div>
                     <p className="mt-1 font-bold text-navy">{lead.service}</p>
                     <p className="mt-1 line-clamp-2 text-xs text-slate-500">{lead.snippet}</p>
+                    {lead.email && lead.email !== '—' ? (
+                      <p className="mt-1.5 flex items-center gap-1.5 truncate text-xs text-slate-600">
+                        <Mail className="size-3.5 shrink-0 text-blue" strokeWidth={2} />
+                        <span className="truncate">{lead.email}</span>
+                      </p>
+                    ) : null}
+                    {lead.phone && lead.phone !== '—' ? (
+                      <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-600">
+                        <Phone className="size-3.5 shrink-0 text-blue" strokeWidth={2} />
+                        {lead.phone}
+                      </p>
+                    ) : null}
                     <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-slate-500">
                       <span className="inline-flex items-center gap-1">
                         <MapPin className="size-3.5 text-blue" strokeWidth={2} /> {lead.postcode}
@@ -457,50 +469,76 @@ export function LeadSplitView({
                       : `${selected.unlockedCount ?? 0} unlocks`}
                   </span>
                 </div>
-                <div className="mt-3 flex flex-col gap-1.5 text-sm text-slate-600">
-                  <p className="flex items-center gap-2">
-                    <Phone className="size-4 shrink-0 text-blue" strokeWidth={2} />
-                    <span>{selected.phone}</span>
-                  </p>
-                  <p className="flex items-center gap-2">
-                    <Mail className="size-4 shrink-0 text-blue" strokeWidth={2} />
-                    <span>{selected.email}</span>
-                  </p>
-                  <p className="flex items-start gap-2">
-                    <MapPin className="mt-0.5 size-4 shrink-0 text-blue" strokeWidth={2} />
-                    <span>
-                      <span className="font-semibold text-navy">
-                        {selected.postcodeRaw || selected.postcode || '—'}
-                      </span>
-                      {selected.postcodeInfo ? (
-                        <span className="block text-xs text-slate-500">
-                          {[
-                            selected.postcodeInfo.district,
-                            selected.postcodeInfo.ward,
-                            selected.postcodeInfo.country,
-                          ]
-                            .filter(Boolean)
-                            .join(' · ')}
-                        </span>
-                      ) : null}
-                    </span>
-                  </p>
+                <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+                  <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-navy">
+                    Contact &amp; Location
+                  </h3>
+                  <DetailGrid
+                    items={[
+                      {
+                        label: 'Contact No',
+                        value:
+                          selected.phone && selected.phone !== '—' ? selected.phone : null,
+                      },
+                      {
+                        label: 'Email',
+                        value:
+                          selected.email && selected.email !== '—' ? selected.email : null,
+                      },
+                      {
+                        label: 'Postcode',
+                        value:
+                          selected.postcodeRaw && selected.postcodeRaw !== 'UK'
+                            ? selected.postcodeRaw
+                            : null,
+                      },
+                      {
+                        label: 'District / Town',
+                        value: selected.postcodeInfo?.district || selected.city || null,
+                      },
+                      { label: 'Ward / Region', value: selected.postcodeInfo?.ward || null },
+                      { label: 'Country', value: selected.postcodeInfo?.country || null },
+                    ]}
+                  />
+                  {!selected.postcodeInfo &&
+                  (!selected.phone || selected.phone === '—') &&
+                  (!selected.email || selected.email === '—') ? (
+                    <p className="mt-2 text-xs text-slate-500">
+                      No contact or location was stored for this lead in the old DB
+                      (user_id = 0).
+                    </p>
+                  ) : null}
                 </div>
 
                 <div className="mt-8">
                   <h3 className="border-b border-slate-200 pb-2 text-lg font-bold text-navy">
                     Details Provided
+                    {(selected.details || []).length ? (
+                      <span className="ml-2 text-sm font-semibold text-slate-400">
+                        ({selected.details.length})
+                      </span>
+                    ) : null}
                   </h3>
-                  <ul className="mt-4 space-y-3 text-sm">
-                    {(selected.details || []).map((d, idx) => (
-                      <li key={d.questionId || `${d.q}-${idx}`}>
-                        <span className="text-slate-600">• {d.q}</span>{' '}
-                        {d.display || d.a ? (
-                          <span className="font-bold text-navy">{d.display || d.a}</span>
-                        ) : null}
-                      </li>
-                    ))}
-                  </ul>
+                  {(selected.details || []).length ? (
+                    <ul className="mt-4 space-y-3 text-sm">
+                      {selected.details.map((d, idx) => (
+                        <li key={d.questionId || `${d.q}-${idx}`}>
+                          <span className="text-slate-600">• {d.q}</span>{' '}
+                          {d.display || d.a ? (
+                            <span className="font-bold text-navy">{d.display || d.a}</span>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : selected.description ? (
+                    <p className="mt-4 whitespace-pre-line text-sm text-slate-600">
+                      {selected.description}
+                    </p>
+                  ) : (
+                    <p className="mt-4 text-sm text-slate-500">
+                      No details provided for this lead in the old DB.
+                    </p>
+                  )}
                 </div>
               </>
             ) : (

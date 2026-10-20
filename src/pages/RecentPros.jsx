@@ -14,6 +14,7 @@ import {
   DeleteAction,
   EditAction,
   PageHeader,
+  RefreshButton,
   RowActions,
   Textarea,
 } from '../components/ui.jsx'
@@ -147,7 +148,9 @@ export default function RecentPros() {
         title="Recent Pro."
         subtitle="Delete all permanently removes every professional from the database."
         actions={
-          <DeleteAllButton
+          <>
+            <RefreshButton onClick={load} loading={loading} />
+            <DeleteAllButton
             label="Delete all professionals"
             confirmText="Permanently delete ALL professionals from the database?\n\nType DELETE to confirm."
             onConfirm={async () => {
@@ -155,7 +158,8 @@ export default function RecentPros() {
               setFlash(`Deleted ${data.count ?? 0} professional(s).`)
               await load()
             }}
-          />
+            />
+          </>
         }
       />
       {flash ? <p className="mb-3 text-sm font-semibold text-ok">{flash}</p> : null}

@@ -14,6 +14,7 @@ import {
   DeleteAction,
   EditAction,
   PageHeader,
+  RefreshButton,
   RowActions,
   ViewAction,
   Select,
@@ -224,6 +225,7 @@ export default function Customers() {
         subtitle="Add, view, edit, or delete customer accounts."
         actions={
           <div className="flex flex-nowrap gap-2">
+            <RefreshButton onClick={load} loading={loading} />
             <select
               className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue"
               value={statusFilter}

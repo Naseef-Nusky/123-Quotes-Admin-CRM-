@@ -6,7 +6,7 @@ import {
   normalizeUnlockTiersForUi,
   serializeUnlockTiers,
 } from '../components/UnlockTokenTiersForm.jsx'
-import { Button, Card, ErrorBanner, Loading, PageHeader } from '../components/ui.jsx'
+import { Button, Card, ErrorBanner, Loading, PageHeader, RefreshButton } from '../components/ui.jsx'
 
 export default function TokenAdjust() {
   const [error, setError] = useState('')
@@ -16,28 +16,26 @@ export default function TokenAdjust() {
   const [flash, setFlash] = useState('')
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    let cancelled = false
-    api
-      .getSettings()
-      .then((settingsRes) => {
-        if (cancelled) return
-        const settings = settingsRes.settings || []
-        const max = settings.find((s) => s.key === 'max_unlocks_per_lead')
-        const tierSetting = settings.find((s) => s.key === 'unlock_token_tiers')
-        const maxN = Number(max?.value)
-        setMaxUnlocksPerLead(Number.isFinite(maxN) && maxN >= 0 ? maxN : 0)
-        setTiers(normalizeUnlockTiersForUi(tierSetting?.value))
-      })
-      .catch((err) => {
-        if (!cancelled) setError(err.message || 'Failed to load token settings')
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
-    return () => {
-      cancelled = true
+  async function load() {
+    setLoading(true)
+    setError('')
+    try {
+      const settingsRes = await api.getSettings()
+      const settings = settingsRes.settings || []
+      const max = settings.find((s) => s.key === 'max_unlocks_per_lead')
+      const tierSetting = settings.find((s) => s.key === 'unlock_token_tiers')
+      const maxN = Number(max?.value)
+      setMaxUnlocksPerLead(Number.isFinite(maxN) && maxN >= 0 ? maxN : 0)
+      setTiers(normalizeUnlockTiersForUi(tierSetting?.value))
+    } catch (err) {
+      setError(err.message || 'Failed to load token settings')
+    } finally {
+      setLoading(false)
     }
+  }
+
+  useEffect(() => {
+    load()
   }, [])
 
   async function savePricing(e) {
@@ -70,6 +68,7 @@ export default function TokenAdjust() {
       <PageHeader
         title="Default Token Adjust"
         subtitle="Common unlock token pricing for all leads that do not have individual tokens set."
+        actions={<RefreshButton onClick={load} loading={loading} />}
       />
       <ErrorBanner message={error} />
 

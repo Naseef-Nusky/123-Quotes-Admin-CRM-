@@ -13,6 +13,7 @@ import {
   Loading,
   Modal,
   PageHeader,
+  RefreshButton,
   RowActions,
   Select,
   StatusBadge,
@@ -236,9 +237,7 @@ export default function SystemUsers() {
         subtitle="Manage admins and super admins for the control panel."
         actions={
           <div className="flex flex-nowrap gap-2">
-            <Button variant="secondary" onClick={load}>
-              Refresh
-            </Button>
+            <RefreshButton onClick={load} loading={loading} />
             {isSuper ? <Button onClick={openCreate}>Add system user</Button> : null}
             {isSuper ? (
               <DeleteAllButton
