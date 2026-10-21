@@ -100,9 +100,12 @@ export default function PostcodeInput({
     setOpen(false)
   }
 
-  const shellClass =
+  // Always keep the flex shell layout — callers may pass plain input classes
+  // which would otherwise stack the chevron below the input.
+  const shellClass = `${
     className ||
-    'flex w-full items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus-within:border-blue focus-within:ring-2 focus-within:ring-blue/20'
+    'w-full rounded-md border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none focus-within:border-blue focus-within:ring-2 focus-within:ring-blue/20'
+  } flex items-center gap-2`
 
   return (
     <div ref={wrapRef} className="relative">

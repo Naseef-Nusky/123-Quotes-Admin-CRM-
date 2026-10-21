@@ -104,6 +104,32 @@ export const api = {
   deleteAllSystemUsers: () => request('/admin/users/all', { method: 'DELETE' }),
 
   getLeads: () => request('/leads/admin/all'),
+  downloadRequestAttachment: async (requestId, attachmentId, filename) => {
+    const token = getToken()
+    const res = await fetch(
+      `${API_BASE}/requests/${requestId}/attachments/${attachmentId}/download`,
+      { headers: token ? { Authorization: `Bearer ${token}` } : {} },
+    )
+    if (!res.ok) {
+      let message = 'Download failed'
+      try {
+        const data = await res.json()
+        message = data.message || message
+      } catch {
+        /* keep default */
+      }
+      throw new Error(message)
+    }
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename || 'attachment'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 4000)
+  },
   updateLead: (id, body) =>
     request(`/leads/admin/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteLead: (id) => request(`/leads/admin/${id}`, { method: 'DELETE' }),

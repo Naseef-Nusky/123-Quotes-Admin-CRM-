@@ -3,8 +3,8 @@ import { api } from '../api/client.js'
 import { mapBusinessApplication } from '../lib/mappers.js'
 import BusinessAddWizard from '../components/BusinessAddWizard.jsx'
 import DeleteAllButton from '../components/DeleteAllButton.jsx'
-import { ActionIconButton, Button, Card, ErrorBanner, FilterSelect, Loading, Modal, PageHeader, RefreshButton, RowActions, ViewAction } from '../components/ui.jsx'
-import { Check, Plus, X } from 'lucide-react'
+import { Button, Card, ErrorBanner, FilterSelect, Loading, Modal, PageHeader, RefreshButton, RowActions, ViewAction } from '../components/ui.jsx'
+import { Plus } from 'lucide-react'
 
 export default function BusinessRegistration() {
   const [regs, setRegs] = useState([])
@@ -168,12 +168,12 @@ export default function BusinessRegistration() {
                 <td className="sticky right-0 bg-white px-2.5 py-2.5 shadow-[-8px_0_12px_-8px_rgba(15,23,42,0.25)]">
                   <RowActions>
                     <ViewAction onClick={() => openView(r)} />
-                    <ActionIconButton label="Approve" variant="primary" onClick={() => approve(r.id)}>
-                      <Check className="size-4" />
-                    </ActionIconButton>
-                    <ActionIconButton label="Decline" variant="danger" onClick={() => decline(r.id)}>
-                      <X className="size-4" />
-                    </ActionIconButton>
+                    <Button size="sm" variant="primary" onClick={() => approve(r.id)}>
+                      Approve
+                    </Button>
+                    <Button size="sm" variant="danger" onClick={() => decline(r.id)}>
+                      Reject
+                    </Button>
                   </RowActions>
                 </td>
               </tr>
@@ -228,7 +228,7 @@ export default function BusinessRegistration() {
             </p>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="danger" onClick={() => decline(active.id)}>
-                Decline
+                Reject
               </Button>
               <Button variant="primary" onClick={() => approve(active.id)}>
                 Approve

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { DataTable, LeadAnswerField } from '../components/AdminViews.jsx'
+import { AttachmentsSection, DataTable, LeadAnswerField } from '../components/AdminViews.jsx'
 import PhoneInput from '../components/PhoneInput.jsx'
 import PostcodeInput from '../components/PostcodeInput.jsx'
 import {
@@ -310,6 +310,8 @@ export default function Leads() {
                 { label: 'Contact No', value: viewing.phone },
                 { label: 'Status', value: viewing.status },
                 { label: 'Date', value: viewing.date },
+                { label: 'City', value: viewing.city },
+                { label: 'Address', value: viewing.address },
                 { label: 'Next tokens', value: viewing.tokenCost ?? 1 },
                 {
                   label: 'Unlocks / matched',
@@ -355,10 +357,22 @@ export default function Leads() {
                 <p className="whitespace-pre-line text-sm text-slate-600">{viewing.description}</p>
               ) : (
                 <p className="text-sm text-slate-500">
-                  No details provided for this lead in the old DB.
+                  No details were submitted with this request.
                 </p>
               )}
+              {(viewing.details || []).length && viewing.description ? (
+                <div className="mt-4">
+                  <p className="text-sm font-bold text-navy">Description</p>
+                  <p className="mt-1 whitespace-pre-line text-sm text-slate-600">
+                    {viewing.description}
+                  </p>
+                </div>
+              ) : null}
             </div>
+            <AttachmentsSection
+              attachments={viewing.attachments || []}
+              requestId={viewing.requestId}
+            />
             <div className="flex justify-end gap-2 pt-1">
               <Button variant="secondary" onClick={() => setViewing(null)}>
                 Close

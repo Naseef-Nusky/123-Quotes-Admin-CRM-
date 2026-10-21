@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Check, Coins, MapPin, Zap, Phone, Mail } from 'lucide-react'
+import { Check, Coins, MapPin, Zap, Phone, Mail, Download, Paperclip } from 'lucide-react'
+import { api } from '../api/client.js'
 import PhoneInput from './PhoneInput.jsx'
 import PostcodeInput from './PostcodeInput.jsx'
 import {
@@ -162,6 +163,78 @@ export function LeadAnswerField({ detail, onChange }) {
       value={detail.a || ''}
       onChange={(e) => onChange(e.target.value)}
     />
+  )
+}
+
+function formatFileSize(bytes) {
+  const n = Number(bytes) || 0
+  if (n < 1024) return `${n} B`
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`
+}
+
+/** Files the customer uploaded with their request, with authenticated download. */
+export function AttachmentsSection({ attachments = [], requestId }) {
+  const [downloadingId, setDownloadingId] = useState(null)
+  const [error, setError] = useState('')
+
+  async function onDownload(att) {
+    const reqId = att.requestId || requestId
+    if (!reqId) return
+    setError('')
+    setDownloadingId(att.id)
+    try {
+      await api.downloadRequestAttachment(reqId, att.id, att.originalName)
+    } catch (err) {
+      setError(err.message || 'Download failed')
+    } finally {
+      setDownloadingId(null)
+    }
+  }
+
+  return (
+    <div>
+      <h3 className="mb-2 border-b border-slate-200 pb-2 text-sm font-bold uppercase tracking-wide text-navy">
+        Attachments
+        {attachments.length ? (
+          <span className="ml-2 text-sm font-semibold text-slate-400">({attachments.length})</span>
+        ) : null}
+      </h3>
+      {error ? <p className="mb-2 text-sm text-warn">{error}</p> : null}
+      {attachments.length ? (
+        <ul className="space-y-2">
+          {attachments.map((att) => (
+            <li
+              key={att.id}
+              className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50/70 px-3 py-2"
+            >
+              <Paperclip className="size-4 shrink-0 text-slate-400" />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-semibold text-navy">
+                  {att.originalName}
+                </span>
+                <span className="block text-xs text-slate-500">
+                  {[att.ext ? att.ext.toUpperCase() : null, formatFileSize(att.sizeBytes)]
+                    .filter(Boolean)
+                    .join(' · ')}
+                  {att.sizeBytes === 0 ? ' · file missing from old import' : ''}
+                </span>
+              </span>
+              <Button
+                variant="secondary"
+                disabled={downloadingId === att.id || !att.sizeBytes}
+                onClick={() => onDownload(att)}
+              >
+                <Download className="mr-1 size-4" />
+                {downloadingId === att.id ? 'Downloading…' : 'Download'}
+              </Button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-slate-500">No files were uploaded with this request.</p>
+      )}
+    </div>
   )
 }
 
@@ -539,6 +612,24 @@ export function LeadSplitView({
                       No details provided for this lead in the old DB.
                     </p>
                   )}
+                </div>
+
+                {(selected.details || []).length && selected.description ? (
+                  <div className="mt-8">
+                    <h3 className="border-b border-slate-200 pb-2 text-lg font-bold text-navy">
+                      Description
+                    </h3>
+                    <p className="mt-4 whitespace-pre-line text-sm text-slate-600">
+                      {selected.description}
+                    </p>
+                  </div>
+                ) : null}
+
+                <div className="mt-8">
+                  <AttachmentsSection
+                    attachments={selected.attachments || []}
+                    requestId={selected.requestId}
+                  />
                 </div>
               </>
             ) : (

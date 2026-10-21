@@ -239,6 +239,17 @@ export function mapAdminLead(lead, leadViewLocked = false, maxUnlocksPerLead = 0
         ? [{ questionId: null, answerId: null, q: 'Summary', a: lead.summary, display: lead.summary, type: 'TEXTAREA', options: [] }]
         : [],
     description: lead.request?.description || lead.summary || '',
+    requestId: lead.requestId || lead.request?.id || null,
+    address: lead.request?.address || customer?.address || '',
+    attachments: (lead.request?.attachments || []).map((a) => ({
+      id: a.id,
+      requestId: a.requestId || lead.requestId || lead.request?.id || null,
+      originalName: a.originalName || 'Attachment',
+      mimeType: a.mimeType || '',
+      sizeBytes: a.sizeBytes || 0,
+      ext: a.ext || '',
+      createdAt: a.createdAt || null,
+    })),
   }
 }
 
