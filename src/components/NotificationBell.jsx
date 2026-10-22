@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Bell } from 'lucide-react'
-import { api } from '../api/client.js'
+import { KIND_TO_TAB, useNotifications } from '../context/NotificationContext.jsx'
 
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -16,27 +16,9 @@ function timeAgo(dateStr) {
 
 export default function NotificationBell() {
   const navigate = useNavigate()
+  const { items, unreadCount, markOneRead, markAllRead, refresh } = useNotifications()
   const [open, setOpen] = useState(false)
-  const [items, setItems] = useState([])
-  const [unreadCount, setUnreadCount] = useState(0)
-  const [loading, setLoading] = useState(false)
   const wrapRef = useRef(null)
-
-  const load = useCallback(async () => {
-    try {
-      const data = await api.getNotifications({ limit: 20 })
-      setItems(data.notifications || [])
-      setUnreadCount(data.unreadCount || 0)
-    } catch {
-      /* keep previous */
-    }
-  }, [])
-
-  useEffect(() => {
-    load()
-    const id = setInterval(load, 45000)
-    return () => clearInterval(id)
-  }, [load])
 
   useEffect(() => {
     function onDoc(e) {
@@ -46,42 +28,16 @@ export default function NotificationBell() {
     return () => document.removeEventListener('mousedown', onDoc)
   }, [])
 
-  async function openPanel() {
+  function openPanel() {
+    if (!open) refresh()
     setOpen((v) => !v)
-    if (!open) {
-      setLoading(true)
-      await load()
-      setLoading(false)
-    }
   }
 
   async function onClickItem(n) {
-    if (!n.isRead) {
-      try {
-        await api.markNotificationRead(n.id)
-        setItems((prev) => prev.map((x) => (x.id === n.id ? { ...x, isRead: true } : x)))
-        setUnreadCount((c) => Math.max(0, c - 1))
-      } catch {
-        /* ignore */
-      }
-    }
+    await markOneRead(n.id)
     setOpen(false)
-    const reviewUrl = n.meta?.reviewUrl
-    if (reviewUrl?.includes('/business-registration')) {
-      navigate('/business-registration')
-    } else if (n.meta?.kind === 'business_registration') {
-      navigate('/business-registration')
-    }
-  }
-
-  async function markAll() {
-    try {
-      await api.markAllNotificationsRead()
-      setItems((prev) => prev.map((x) => ({ ...x, isRead: true })))
-      setUnreadCount(0)
-    } catch {
-      /* ignore */
-    }
+    const tab = KIND_TO_TAB[n.meta?.kind]
+    if (tab) navigate(tab)
   }
 
   return (
@@ -107,7 +63,7 @@ export default function NotificationBell() {
             {unreadCount > 0 ? (
               <button
                 type="button"
-                onClick={markAll}
+                onClick={markAllRead}
                 className="text-xs font-semibold text-blue hover:underline"
               >
                 Mark all read
@@ -115,12 +71,7 @@ export default function NotificationBell() {
             ) : null}
           </div>
           <div className="max-h-80 overflow-y-auto">
-            {loading && !items.length ? (
-              <div className="grid place-items-center px-4 py-6">
-                <div className="size-6 animate-spin rounded-full border-2 border-blue border-t-transparent" />
-              </div>
-            ) : null}
-            {!loading && !items.length ? (
+            {!items.length ? (
               <p className="px-4 py-6 text-center text-sm text-slate-500">No notifications yet.</p>
             ) : null}
             {items.map((n) => (
@@ -138,6 +89,16 @@ export default function NotificationBell() {
               </button>
             ))}
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false)
+              navigate('/notifications')
+            }}
+            className="block w-full px-4 py-2.5 text-center text-xs font-semibold text-blue transition hover:bg-slate-50"
+          >
+            View all notifications
+          </button>
         </div>
       ) : null}
     </div>

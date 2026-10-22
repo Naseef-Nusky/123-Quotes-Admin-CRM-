@@ -21,16 +21,24 @@ import {
   MapPin,
   ChevronLeft,
   ChevronRight,
+  Bell,
 } from 'lucide-react'
 import { useAuth } from '../context/auth.js'
 import NotificationBell from './NotificationBell.jsx'
+import { NotificationProvider, useNotifications } from '../context/NotificationContext.jsx'
 
 const navGroups = [
   {
     title: 'Overview',
     items: [
       { to: '/dashboard', label: 'Dashboard', end: true, icon: LayoutDashboard },
-      { to: '/business-registration', label: 'Business Registration', icon: ClipboardCheck },
+      {
+        to: '/business-registration',
+        label: 'Business Registration',
+        icon: ClipboardCheck,
+        badgeKind: 'business_registration',
+      },
+      { to: '/notifications', label: 'Notifications', icon: Bell, badgeTotal: true },
       { to: '/system-users', label: 'System Users', icon: Shield },
       { to: '/customers', label: 'Customers', icon: UsersRound },
     ],
@@ -39,7 +47,7 @@ const navGroups = [
     title: 'Leads',
     items: [
       { to: '/locked-leads', label: 'Locked Leads', icon: Lock },
-      { to: '/recent-leads', label: 'Recent Leads', icon: Clock3 },
+      { to: '/recent-leads', label: 'Recent Leads', icon: Clock3, badgeKind: 'new_lead' },
       { to: '/leads', label: 'All Leads', icon: ListChecks },
     ],
   },
@@ -65,8 +73,17 @@ const navGroups = [
 ]
 
 export default function Layout({ children }) {
+  return (
+    <NotificationProvider>
+      <LayoutInner>{children}</LayoutInner>
+    </NotificationProvider>
+  )
+}
+
+function LayoutInner({ children }) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const { unreadCount, unreadByKind } = useNotifications()
   const [mobileOpen, setMobileOpen] = useState(false)
 
   function handleLogout() {
@@ -105,6 +122,11 @@ export default function Layout({ children }) {
             <div className="space-y-1">
               {group.items.map((item) => {
                 const Icon = item.icon
+                const badge = item.badgeTotal
+                  ? unreadCount
+                  : item.badgeKind
+                    ? unreadByKind[item.badgeKind] || 0
+                    : 0
                 return (
                   <NavLink
                     key={item.to}
@@ -121,6 +143,11 @@ export default function Layout({ children }) {
                   >
                     <Icon className="size-[18px] shrink-0" strokeWidth={1.9} />
                     {item.label}
+                    {badge > 0 ? (
+                      <span className="ml-auto flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-warn px-1.5 text-[10px] font-bold text-white">
+                        {badge > 99 ? '99+' : badge}
+                      </span>
+                    ) : null}
                   </NavLink>
                 )
               })}

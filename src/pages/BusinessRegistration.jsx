@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { api } from '../api/client.js'
+import { useNotifications } from '../context/NotificationContext.jsx'
 import { mapBusinessApplication } from '../lib/mappers.js'
 import BusinessAddWizard from '../components/BusinessAddWizard.jsx'
 import DeleteAllButton from '../components/DeleteAllButton.jsx'
@@ -45,6 +46,12 @@ export default function BusinessRegistration() {
   useEffect(() => {
     load()
   }, [load])
+
+  // Viewing this tab clears its sidebar number badge.
+  const { markKindRead, unreadByKind } = useNotifications()
+  useEffect(() => {
+    if (unreadByKind.business_registration > 0) markKindRead('business_registration')
+  }, [unreadByKind, markKindRead])
 
   function openAdd() {
     setMode('add')

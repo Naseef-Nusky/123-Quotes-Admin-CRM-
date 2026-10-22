@@ -1,11 +1,19 @@
+import { useEffect } from 'react'
 import { LeadSplitView } from '../components/AdminViews.jsx'
 import DeleteAllButton from '../components/DeleteAllButton.jsx'
 import { ErrorBanner, PageHeader, RefreshButton } from '../components/ui.jsx'
 import { useAdminLeads } from '../hooks/useAdminLeads.js'
+import { useNotifications } from '../context/NotificationContext.jsx'
 
 export default function RecentLeads() {
   const { leads, loading, error, deleteLead, deleteAllLeads, updateLead, leadViewLocked, unlockTiers, reload } =
     useAdminLeads()
+
+  // Viewing this tab clears its sidebar number badge.
+  const { markKindRead, unreadByKind } = useNotifications()
+  useEffect(() => {
+    if (unreadByKind.new_lead > 0) markKindRead('new_lead')
+  }, [unreadByKind, markKindRead])
 
   return (
     <div>

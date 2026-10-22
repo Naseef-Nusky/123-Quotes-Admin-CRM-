@@ -17,6 +17,7 @@ import SystemUsers from './pages/SystemUsers.jsx'
 import BusinessRegistration from './pages/BusinessRegistration.jsx'
 import Customers from './pages/Customers.jsx'
 import Postcodes from './pages/Postcodes.jsx'
+import Notifications from './pages/Notifications.jsx'
 import { Loading } from './components/ui.jsx'
 
 function Protected({ children }) {
@@ -43,6 +44,7 @@ export default function App() {
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/business-registration" element={<BusinessRegistration />} />
+                <Route path="/notifications" element={<Notifications />} />
                 <Route path="/category-errors" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/system-users" element={<SystemUsers />} />
                 <Route path="/customers" element={<Customers />} />

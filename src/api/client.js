@@ -68,6 +68,11 @@ export const api = {
     request(`/admin/notifications/${id}/read`, { method: 'PATCH' }),
   markAllNotificationsRead: () =>
     request('/admin/notifications/read-all', { method: 'PATCH' }),
+  markNotificationsReadByKind: (kind) =>
+    request('/admin/notifications/read-kind', {
+      method: 'PATCH',
+      body: JSON.stringify({ kind }),
+    }),
 
   getUsers: (params = {}) => {
     const q = new URLSearchParams(params).toString()

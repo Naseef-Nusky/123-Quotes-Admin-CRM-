@@ -39,7 +39,9 @@ export default function Categories() {
   const [active, setActive] = useState(null)
   const [form, setForm] = useState(emptyForm)
   const [q, setQ] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
+  // Default to Active so deleted (soft-deleted/inactive) categories leave the
+  // list immediately; pick "Inactive" or "All statuses" to see them again.
+  const [statusFilter, setStatusFilter] = useState('active')
 
   const load = useCallback(async () => {
     setLoading(true)
