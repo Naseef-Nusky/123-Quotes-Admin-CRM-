@@ -26,6 +26,8 @@ const emptyForm = {
   icon: '',
   sortOrder: '0',
   isActive: 'true',
+  imageFile: null,
+  imagePreview: '',
 }
 
 export default function Categories() {
@@ -91,8 +93,20 @@ export default function Categories() {
       icon: cat.icon || '',
       sortOrder: String(cat.sortOrder ?? 0),
       isActive: cat.isActive === false ? 'false' : 'true',
+      imageFile: null,
+      imagePreview: cat.imageUrl || '',
     })
     setError('')
+  }
+
+  function onImagePick(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setForm((f) => ({
+      ...f,
+      imageFile: file,
+      imagePreview: URL.createObjectURL(file),
+    }))
   }
 
   function closeModal() {
@@ -118,12 +132,17 @@ export default function Categories() {
         isActive: form.isActive !== 'false',
       }
 
+      let categoryId = active?.id
       if (mode === 'add') {
-        await api.createCategory(body)
+        const data = await api.createCategory(body)
+        categoryId = data.category?.id
         setFlash('Category created.')
       } else {
         await api.updateCategory(active.id, body)
         setFlash('Category updated.')
+      }
+      if (categoryId && form.imageFile) {
+        await api.uploadCategoryImage(categoryId, form.imageFile)
       }
       closeModal()
       setTimeout(() => setFlash(''), 2200)
@@ -208,6 +227,7 @@ export default function Categories() {
         <table className="w-full text-left text-[13px] [&_td]:[overflow-wrap:anywhere]">
           <thead className="sticky top-0 z-10 bg-slate-50 text-slate-500">
             <tr>
+              <th className="px-2.5 py-2.5">Image</th>
               <th className="px-2.5 py-2.5">Name</th>
               <th className="px-2.5 py-2.5">Slug</th>
               <th className="px-2.5 py-2.5">Sort</th>
@@ -218,6 +238,19 @@ export default function Categories() {
           <tbody>
             {filtered.map((c) => (
               <tr key={c.id} className="border-t border-slate-100">
+                <td className="px-2.5 py-2.5">
+                  {c.imageUrl ? (
+                    <img
+                      src={c.imageUrl}
+                      alt=""
+                      className="size-10 rounded-lg object-cover ring-1 ring-slate-200"
+                    />
+                  ) : (
+                    <span className="inline-flex size-10 items-center justify-center rounded-lg bg-slate-100 text-[10px] text-slate-400">
+                      —
+                    </span>
+                  )}
+                </td>
                 <td className="px-2.5 py-2.5">
                   <p className="font-medium text-navy">{c.name}</p>
                   {c.description ? (
@@ -248,7 +281,7 @@ export default function Categories() {
             ))}
             {!filtered.length && !loading ? (
               <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-slate-500">
+                <td colSpan={6} className="px-4 py-6 text-center text-slate-500">
                   No categories yet. Add one to group your services.
                 </td>
               </tr>
@@ -275,6 +308,11 @@ export default function Categories() {
                 { label: 'Description', value: viewing.description, wide: true },
               ]}
             />
+            {viewing.imageUrl ? (
+              <div className="overflow-hidden rounded-xl border border-slate-200">
+                <img src={viewing.imageUrl} alt="" className="aspect-[16/9] w-full object-cover" />
+              </div>
+            ) : null}
             <div className="flex justify-end gap-2">
               <Button variant="secondary" onClick={() => setViewing(null)}>
                 Close
@@ -318,8 +356,31 @@ export default function Categories() {
               label="Icon (optional)"
               value={form.icon}
               onChange={(e) => setForm((f) => ({ ...f, icon: e.target.value }))}
-              placeholder="Icon name or URL"
+              placeholder="Icon name or emoji"
             />
+            <div>
+              <p className="mb-1.5 text-sm font-semibold text-navy">Category image (optional)</p>
+              {form.imagePreview ? (
+                <div className="mb-2 overflow-hidden rounded-xl border border-slate-200">
+                  <img
+                    src={form.imagePreview}
+                    alt=""
+                    className="aspect-[16/9] w-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="mb-2 flex aspect-[16/9] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 text-xs text-slate-500">
+                  No image selected
+                </div>
+              )}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                onChange={onImagePick}
+                className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue/10 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-blue"
+              />
+              <p className="mt-1 text-xs text-slate-500">JPG, PNG, GIF or WebP. Max 5 MB.</p>
+            </div>
             <Input
               label="Sort order"
               type="number"

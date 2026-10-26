@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
+  House,
   Lock,
   Clock3,
   ListChecks,
@@ -32,6 +33,7 @@ const navGroups = [
     title: 'Overview',
     items: [
       { to: '/dashboard', label: 'Dashboard', end: true, icon: LayoutDashboard },
+      { to: '/home-page', label: 'Home page', end: true, icon: House },
       {
         to: '/business-registration',
         label: 'Business Registration',

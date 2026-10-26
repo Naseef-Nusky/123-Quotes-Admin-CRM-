@@ -10,6 +10,7 @@ import Leads from './pages/Leads.jsx'
 import Professionals from './pages/Professionals.jsx'
 import ProMgmt from './pages/ProMgmt.jsx'
 import Categories from './pages/Categories.jsx'
+import HomePage from './pages/HomePage.jsx'
 import PaymentDetails from './pages/PaymentDetails.jsx'
 import TokenPackages from './pages/TokenPackages.jsx'
 import TokenAdjust from './pages/TokenAdjust.jsx'
@@ -43,6 +44,7 @@ export default function App() {
               <Routes>
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/home-page" element={<HomePage />} />
                 <Route path="/business-registration" element={<BusinessRegistration />} />
                 <Route path="/notifications" element={<Notifications />} />
                 <Route path="/category-errors" element={<Navigate to="/dashboard" replace />} />

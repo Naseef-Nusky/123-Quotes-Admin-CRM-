@@ -103,6 +103,7 @@ function mapServices(list) {
     categoryId: s.categoryId || s.category?.id,
     name: s.name,
     description: s.shortDesc || s.description || '',
+    imageUrl: s.imageUrl || '',
     tokenCost: s.tokenCost ?? 1,
     questionCount: s._count?.questions ?? (s.questions || []).length,
     questions: null, // loaded on demand
@@ -229,6 +230,9 @@ export default function ProMgmt() {
       name: '',
       categoryId: categories[0]?.id || '',
       description: '',
+      imageUrl: '',
+      imageFile: null,
+      imagePreview: '',
     })
     setError('')
   }
@@ -240,8 +244,22 @@ export default function ProMgmt() {
       name: service.name,
       categoryId: service.categoryId || categories[0]?.id || '',
       description: service.description || '',
+      imageUrl: service.imageUrl || '',
+      imageFile: null,
+      imagePreview: service.imageUrl || '',
     })
     setError('')
+  }
+
+  function onServiceImagePick(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const preview = URL.createObjectURL(file)
+    setCatModal((m) => ({
+      ...m,
+      imageFile: file,
+      imagePreview: preview,
+    }))
   }
 
   async function saveCategory(e) {
@@ -260,6 +278,7 @@ export default function ProMgmt() {
     setSaving(true)
     setError('')
     try {
+      let serviceId = catModal.id
       if (catModal.mode === 'add') {
         const data = await api.createService({
           categoryId,
@@ -269,10 +288,7 @@ export default function ProMgmt() {
           tokenCost: 1,
           isActive: true,
         })
-        setCatModal(null)
-        flashMsg('Service added.')
-        await load()
-        setSelectedId(data.service?.id)
+        serviceId = data.service?.id
       } else {
         await api.updateService(catModal.id, {
           categoryId,
@@ -280,10 +296,16 @@ export default function ProMgmt() {
           shortDesc: catModal.description || '',
           description: catModal.description || '',
         })
-        setCatModal(null)
-        flashMsg('Service updated.')
-        await load()
       }
+
+      if (serviceId && catModal.imageFile) {
+        await api.uploadServiceImage(serviceId, catModal.imageFile)
+      }
+
+      setCatModal(null)
+      flashMsg(catModal.mode === 'add' ? 'Service added.' : 'Service updated.')
+      await load()
+      if (serviceId) setSelectedId(serviceId)
     } catch (err) {
       setError(err.message || 'Save failed')
     } finally {
@@ -476,13 +498,23 @@ export default function ProMgmt() {
                 key={service.id}
                 type="button"
                 onClick={() => setSelectedId(service.id)}
-                className={`flex w-full items-start gap-2 border-b border-slate-50 px-4 py-3 text-left transition hover:bg-slate-50 ${
+                className={`flex w-full items-center gap-2.5 border-b border-slate-50 px-4 py-3 text-left transition hover:bg-slate-50 ${
                   selected?.id === service.id ? 'bg-blue/5' : ''
                 }`}
               >
-                <FolderTree className="mt-0.5 size-4 shrink-0 text-blue" />
-                <span>
-                  <span className="block text-sm font-semibold text-navy">{service.name}</span>
+                {service.imageUrl ? (
+                  <img
+                    src={service.imageUrl}
+                    alt=""
+                    className="size-10 shrink-0 rounded-lg object-cover"
+                  />
+                ) : (
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-blue/10 text-blue">
+                    <FolderTree className="size-4" />
+                  </span>
+                )}
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold text-navy">{service.name}</span>
                   <span className="text-xs text-slate-500">
                     {service.questionCount ?? (service.questions || []).length} question(s)
                   </span>
@@ -499,7 +531,16 @@ export default function ProMgmt() {
           {selected ? (
             <div>
               <div className="flex flex-wrap items-start justify-between gap-3 border-b border-slate-100 px-5 py-4">
-                <div>
+                <div className="min-w-0 flex-1">
+                  {selected.imageUrl ? (
+                    <div className="mb-3 overflow-hidden rounded-xl border border-slate-200">
+                      <img
+                        src={selected.imageUrl}
+                        alt=""
+                        className="aspect-[21/9] w-full max-w-lg object-cover"
+                      />
+                    </div>
+                  ) : null}
                   <h2 className="text-xl font-bold text-navy">{selected.name}</h2>
                   {selected.description ? (
                     <p className="mt-1 text-sm text-slate-500">{selected.description}</p>
@@ -617,6 +658,29 @@ export default function ProMgmt() {
               onChange={(e) => setCatModal((m) => ({ ...m, description: e.target.value }))}
               rows={3}
             />
+            <div>
+              <p className="mb-1.5 text-sm font-semibold text-navy">Service image (optional)</p>
+              {catModal.imagePreview ? (
+                <div className="mb-2 overflow-hidden rounded-xl border border-slate-200">
+                  <img
+                    src={catModal.imagePreview}
+                    alt=""
+                    className="aspect-[16/9] w-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="mb-2 flex aspect-[16/9] items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50 text-xs text-slate-500">
+                  No image selected
+                </div>
+              )}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                onChange={onServiceImagePick}
+                className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue/10 file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-blue"
+              />
+              <p className="mt-1 text-xs text-slate-500">JPG, PNG, GIF or WebP. Max 5 MB.</p>
+            </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="secondary" onClick={() => setCatModal(null)}>
                 Cancel

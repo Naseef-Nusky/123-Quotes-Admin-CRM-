@@ -173,12 +173,38 @@ export const api = {
   updateService: (id, body) =>
     request(`/services/manage/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteService: (id) => request(`/services/manage/${id}`, { method: 'DELETE' }),
+  uploadServiceImage: async (id, file) => {
+    const token = getToken()
+    const form = new FormData()
+    form.append('image', file)
+    const res = await fetch(`${API_BASE}/services/manage/${id}/image`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: form,
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(data.message || 'Image upload failed')
+    return data
+  },
   createCategory: (body) =>
     request('/services/manage/categories', { method: 'POST', body: JSON.stringify(body) }),
   updateCategory: (id, body) =>
     request(`/services/manage/categories/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   deleteCategory: (id) =>
     request(`/services/manage/categories/${id}`, { method: 'DELETE' }),
+  uploadCategoryImage: async (id, file) => {
+    const token = getToken()
+    const form = new FormData()
+    form.append('image', file)
+    const res = await fetch(`${API_BASE}/services/manage/categories/${id}/image`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: form,
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(data.message || 'Image upload failed')
+    return data
+  },
 
   getQuestions: (serviceId) =>
     request(`/questions${serviceId ? `?serviceId=${encodeURIComponent(serviceId)}` : ''}`),
