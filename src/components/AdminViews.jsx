@@ -250,6 +250,7 @@ export function LeadSplitView({
   onDelete,
   onEdit,
   onConfirm,
+  onLoadDetails,
   unlockTiers = null,
   loading = false,
   leadViewLocked = false,
@@ -264,6 +265,7 @@ export function LeadSplitView({
   const [tokenSaving, setTokenSaving] = useState(false)
   const [editError, setEditError] = useState('')
   const [tokenError, setTokenError] = useState('')
+  const [detailsLoading, setDetailsLoading] = useState(false)
 
   const list = useMemo(() => {
     let rows = [...(items || [])]
@@ -276,12 +278,8 @@ export function LeadSplitView({
     } else if (resolvedMode === 'unlocked') {
       rows = rows.filter((l) => !l.locked)
     } else if (resolvedMode === 'recent') {
-      const cutoff = Date.now() - 1000 * 60 * 60 * 24 * 30
-      rows = rows.filter((l) => {
-        if (l.status === 'CANCELLED') return false
-        if (!l.createdAtMs) return true
-        return l.createdAtMs >= cutoff
-      })
+      // Newest non-cancelled leads (API already returns createdAt desc).
+      rows = rows.filter((l) => l.status !== 'CANCELLED')
     }
 
     const term = q.trim().toLowerCase()
@@ -309,6 +307,20 @@ export function LeadSplitView({
 
   const selected = list.find((l) => l.id === selectedId) || list[0] || null
 
+  useEffect(() => {
+    if (!selected?.id || !onLoadDetails || selected.detailsLoaded) return
+    let cancelled = false
+    setDetailsLoading(true)
+    onLoadDetails(selected.id)
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setDetailsLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [selected?.id, selected?.detailsLoaded, onLoadDetails])
+
   const defaultEmpty =
     mode === 'locked' || filterLocked === true
       ? leadViewLocked
@@ -318,18 +330,26 @@ export function LeadSplitView({
         ? 'No recent leads found.'
         : 'No leads found.'
 
-  function openEdit(lead) {
-    const parsed = parseIntlPhone(lead.phone === '—' ? '' : lead.phone || '')
-    setEditing(lead)
+  async function openEdit(lead) {
+    let row = lead
+    if (onLoadDetails && !lead.detailsLoaded) {
+      try {
+        row = (await onLoadDetails(lead.id)) || lead
+      } catch {
+        /* use list row */
+      }
+    }
+    const parsed = parseIntlPhone(row.phone === '—' ? '' : row.phone || '')
+    setEditing(row)
     setForm({
-      firstName: lead.firstName || '',
-      lastName: lead.lastName || '',
-      email: lead.email === '—' ? '' : lead.email || '',
+      firstName: row.firstName || '',
+      lastName: row.lastName || '',
+      email: row.email === '—' ? '' : row.email || '',
       phone: parsed.localNumber,
       countryCode: parsed.countryCode || DEFAULT_COUNTRY_CODE,
-      postcode: lead.postcodeRaw || '',
-      status: lead.status || 'OPEN',
-      details: (lead.details || []).map((d) => ({
+      postcode: row.postcodeRaw || '',
+      status: row.status || 'OPEN',
+      details: (row.details || []).map((d) => ({
         questionId: d.questionId || null,
         q: d.q || 'Question',
         a: d.a === '—' ? '' : d.a || '',
@@ -592,7 +612,9 @@ export function LeadSplitView({
                       </span>
                     ) : null}
                   </h3>
-                  {(selected.details || []).length ? (
+                  {detailsLoading && !selected.detailsLoaded ? (
+                    <p className="mt-4 text-sm text-slate-500">Loading details…</p>
+                  ) : (selected.details || []).length ? (
                     <ul className="mt-4 space-y-3 text-sm">
                       {selected.details.map((d, idx) => (
                         <li key={d.questionId || `${d.q}-${idx}`}>

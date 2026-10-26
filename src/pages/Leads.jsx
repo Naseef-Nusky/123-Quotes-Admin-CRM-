@@ -21,8 +21,20 @@ import { useAdminLeads } from '../hooks/useAdminLeads.js'
 const LEAD_STATUSES = ['OPEN', 'MATCHED', 'PARTIALLY_UNLOCKED', 'CLOSED', 'CANCELLED']
 
 export default function Leads() {
-  const { leads, loading, error, deleteLead, deleteAllLeads, updateLead, unlockTiers, reload } =
-    useAdminLeads()
+  const {
+    leads,
+    loading,
+    loadingMore,
+    hasMore,
+    loadMore,
+    error,
+    deleteLead,
+    deleteAllLeads,
+    updateLead,
+    loadLeadDetails,
+    unlockTiers,
+    reload,
+  } = useAdminLeads({ limit: 150 })
   const [statusFilter, setStatusFilter] = useState('')
   const [contactFilter, setContactFilter] = useState('')
   const [serviceFilter, setServiceFilter] = useState('')
@@ -51,18 +63,26 @@ export default function Leads() {
   const [formError, setFormError] = useState('')
   const [tokenError, setTokenError] = useState('')
 
-  function openEdit(row) {
-    const parsed = parseIntlPhone(row.phone === '—' ? '' : row.phone || '')
-    setEditing(row)
+  async function openEdit(row) {
+    let lead = row
+    if (!row.detailsLoaded) {
+      try {
+        lead = (await loadLeadDetails(row.id)) || row
+      } catch {
+        /* use list row */
+      }
+    }
+    const parsed = parseIntlPhone(lead.phone === '—' ? '' : lead.phone || '')
+    setEditing(lead)
     setForm({
-      firstName: row.firstName || '',
-      lastName: row.lastName || '',
-      email: row.email === '—' ? '' : row.email || '',
+      firstName: lead.firstName || '',
+      lastName: lead.lastName || '',
+      email: lead.email === '—' ? '' : lead.email || '',
       phone: parsed.localNumber,
       countryCode: parsed.countryCode || DEFAULT_COUNTRY_CODE,
-      postcode: row.postcodeRaw || '',
-      status: row.status || 'OPEN',
-      details: (row.details || []).map((d) => ({
+      postcode: lead.postcodeRaw || '',
+      status: lead.status || 'OPEN',
+      details: (lead.details || []).map((d) => ({
         questionId: d.questionId || null,
         q: d.q || 'Question',
         a: d.a === '—' ? '' : d.a || '',
@@ -72,6 +92,18 @@ export default function Leads() {
       })),
     })
     setFormError('')
+  }
+
+  async function openView(row) {
+    setViewing(row)
+    if (!row.detailsLoaded) {
+      try {
+        const full = await loadLeadDetails(row.id)
+        if (full) setViewing(full)
+      } catch {
+        /* keep list row */
+      }
+    }
   }
 
   function openTokens(row) {
@@ -196,7 +228,7 @@ export default function Leads() {
       label: 'Action',
       render: (row) => (
         <RowActions>
-          <ViewAction onClick={() => setViewing(row)} />
+          <ViewAction onClick={() => openView(row)} />
           <EditAction onClick={() => openEdit(row)} />
           <ActionIconButton label="Tokens" variant="secondary" onClick={() => openTokens(row)}>
             <Coins className="size-4" />
@@ -293,6 +325,13 @@ export default function Leads() {
           </>
         }
       />
+      {hasMore ? (
+        <div className="mt-4 flex justify-center">
+          <Button type="button" variant="secondary" disabled={loadingMore} onClick={loadMore}>
+            {loadingMore ? 'Loading…' : 'Load more leads'}
+          </Button>
+        </div>
+      ) : null}
 
       <Modal
         open={!!viewing}

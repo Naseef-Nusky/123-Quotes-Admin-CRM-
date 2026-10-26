@@ -108,7 +108,15 @@ export const api = {
   deleteAllPostcodes: () => request('/admin/postcodes/all', { method: 'DELETE' }),
   deleteAllSystemUsers: () => request('/admin/users/all', { method: 'DELETE' }),
 
-  getLeads: () => request('/leads/admin/all'),
+  getLeads: (params = {}) => {
+    const q = new URLSearchParams(
+      Object.entries(params)
+        .filter(([, v]) => v != null && v !== '')
+        .map(([k, v]) => [k, String(v)]),
+    ).toString()
+    return request(`/leads/admin/all${q ? `?${q}` : ''}`)
+  },
+  getLead: (id) => request(`/leads/admin/${id}`),
   downloadRequestAttachment: async (requestId, attachmentId, filename) => {
     const token = getToken()
     const res = await fetch(

@@ -1,21 +1,25 @@
 import { LeadSplitView } from '../components/AdminViews.jsx'
 import DeleteAllButton from '../components/DeleteAllButton.jsx'
-import { ErrorBanner, PageHeader, RefreshButton } from '../components/ui.jsx'
+import { Button, ErrorBanner, PageHeader, RefreshButton } from '../components/ui.jsx'
 import { useAdminLeads } from '../hooks/useAdminLeads.js'
 
 export default function LockedLeads() {
   const {
     leads,
     loading,
+    loadingMore,
+    hasMore,
+    loadMore,
     error,
     deleteLead,
     deleteAllLeads,
     updateLead,
+    loadLeadDetails,
     setLeadLock,
     leadViewLocked,
     unlockTiers,
     reload,
-  } = useAdminLeads()
+  } = useAdminLeads({ limit: 150 })
 
   return (
     <div>
@@ -59,6 +63,7 @@ export default function LockedLeads() {
         loading={loading}
         unlockTiers={unlockTiers}
         onEdit={updateLead}
+        onLoadDetails={loadLeadDetails}
         onDelete={async (lead) => {
           if (!window.confirm(`Delete lead for “${lead.name}”?`)) return
           try {
@@ -75,6 +80,13 @@ export default function LockedLeads() {
           }
         }}
       />
+      {hasMore ? (
+        <div className="mt-4 flex justify-center">
+          <Button type="button" variant="secondary" disabled={loadingMore} onClick={loadMore}>
+            {loadingMore ? 'Loading…' : 'Load more leads'}
+          </Button>
+        </div>
+      ) : null}
     </div>
   )
 }

@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { api } from '../api/client.js'
 
@@ -20,27 +20,55 @@ export function NotificationProvider({ children }) {
   const [unreadCount, setUnreadCount] = useState(0)
   const [unreadByKind, setUnreadByKind] = useState({})
   const location = useLocation()
+  const lastFullPath = useRef('')
 
+  const applyCounts = useCallback((data) => {
+    setUnreadCount(data.unreadCount || 0)
+    setUnreadByKind(data.unreadByKind || {})
+  }, [])
+
+  /** Full list — only when the notifications page needs rows. */
   const refresh = useCallback(async () => {
     try {
       const data = await api.getNotifications({ limit: 30 })
       setItems(data.notifications || [])
-      setUnreadCount(data.unreadCount || 0)
-      setUnreadByKind(data.unreadByKind || {})
+      applyCounts(data)
     } catch {
       /* keep previous */
     }
-  }, [])
+  }, [applyCounts])
 
-  // Refresh on mount, on every route change, and poll for new arrivals.
+  /** Badge polling — counts only (much cheaper on remote DB). */
+  const refreshCounts = useCallback(async () => {
+    try {
+      const data = await api.getNotifications({ lite: 1 })
+      applyCounts(data)
+    } catch {
+      /* keep previous */
+    }
+  }, [applyCounts])
+
+  // Mount: load counts quickly. Full list only on /notifications.
   useEffect(() => {
-    refresh()
-  }, [refresh, location.pathname])
+    refreshCounts()
+  }, [refreshCounts])
 
   useEffect(() => {
-    const id = setInterval(refresh, 30000)
+    if (location.pathname === '/notifications') {
+      if (lastFullPath.current !== location.pathname) {
+        lastFullPath.current = location.pathname
+        refresh()
+      }
+    } else {
+      lastFullPath.current = ''
+    }
+  }, [location.pathname, refresh])
+
+  // Poll badges only (not full list) — every 60s
+  useEffect(() => {
+    const id = setInterval(refreshCounts, 60000)
     return () => clearInterval(id)
-  }, [refresh])
+  }, [refreshCounts])
 
   const markOneRead = useCallback(
     async (id) => {
@@ -63,9 +91,8 @@ export function NotificationProvider({ children }) {
       } catch {
         /* ignore */
       }
-      refresh()
     },
-    [items, refresh],
+    [items],
   )
 
   const markKindRead = useCallback(
@@ -86,9 +113,8 @@ export function NotificationProvider({ children }) {
       } catch {
         /* ignore */
       }
-      refresh()
     },
-    [unreadByKind, refresh],
+    [unreadByKind],
   )
 
   const markAllRead = useCallback(async () => {
@@ -100,8 +126,7 @@ export function NotificationProvider({ children }) {
     } catch {
       /* ignore */
     }
-    refresh()
-  }, [refresh])
+  }, [])
 
   return (
     <NotificationContext.Provider
@@ -110,6 +135,7 @@ export function NotificationProvider({ children }) {
         unreadCount,
         unreadByKind,
         refresh,
+        refreshCounts,
         markOneRead,
         markKindRead,
         markAllRead,
